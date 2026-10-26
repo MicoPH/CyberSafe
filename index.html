@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CyberSafe - Web-based Cybersecurity Learning Module">
+  <title>CyberSafe | Cybersecurity Learning Module</title>
+  <link rel="stylesheet" href="css/colors.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/BLASTACTS.css">
+  <link rel="shortcut icon" id="favicon" href="favicon.ico">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+
+      <div id="navbar2"></div>
+      <div class="brand">
+        <img src="" class="brand-icon" id="mainicon" alt="CS">
+        <div>
+          <strong id="titlename">CyberSafe</strong>
+          <span>Cybersecurity Learning Module.</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button class="nav-item active" data-page="dashboard"><img src="img/vector/dashboard.svg" height="24" width="24" class="vector-nav" data-image="dashboard"> Dashboard</button>
+        <button class="nav-item" data-page="lessons"><img src="img/vector/bulb.svg" height="24" width="24" class="vector-nav" data-image="bulb"> Lessons</button>
+        <button class="nav-item" data-page="interactive"><img src="img/vector/game.svg" height="24" width="24" class="vector-nav" data-image="game"> Games</button>
+        <button class="nav-item" data-page="leaderboard"><img src="img/vector/leaderboard.svg" height="24" width="24" class="vector-nav" data-image="leaderboard"> Leaderboard</button>
+        <button class="nav-item" data-page="password"><img src="img/vector/password.svg" height="24" width="24" class="vector-nav" data-image="password"> Password Tools</button>
+        <button class="nav-item" data-page="tips"><img src="img/vector/safety-tips.svg" height="24" width="24" class="vector-nav" data-image="safety-tips"> Safety Tips</button>
+        <button class="nav-item" data-page="results"><img src="img/vector/results.svg" height="24" width="24" class="vector-nav" data-image="results"> My Results</button>
+        <button class="nav-item" data-page="settings"><img src="img/vector/settings.svg" height="24" width="24" class="vector-nav" data-image="settings"> Settings</button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="mini-progress">
+          <div class="progress-row"><span>Course progress</span><strong id="sideProgress">0%</strong></div>
+          <div class="progress-track"><div id="sideProgressBar" class="progress-fill"></div></div>
+        </div>
+        <p>CyberSafe Prototype v0.0.1-alpha</p>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header id="topbar" class="topbar">
+        <div id="navbar"></div>
+        <div class="headbar">
+          <button class="menu-btn" id="menuBtn" aria-label="Open menu">☰</button>
+          <div class="breadcrumb" id="breadcrumb">Dashboard</div>
+          <div class="top-actions">
+            <div class="flexy-layout">
+              <img src="img/vector/expstar.svg" alt="" height="16" width="16" class="vector_icon">
+              <span id="topbar-exp">0 XP</span>
+            </div>
+          </div>
+        </div>
+      </header>
+      <div id="heightmargin"></div>
+      <div class="content" id="page-content">
+        <section class="page active" id="dashboard">
+          <div class="hero">
+            <div>
+              <span class="eyebrow">CYBERSAFE</span>
+              <h1 id="heroTitle">Build your cyber awareness.</h1>
+              <p id="heroDescription">Learn how to recognize phishing, scams, unsafe links, weak passwords, and other common online threats.</p>
+              <button class="primary-btn" id="heroContinueLearning" data-go="lessons">Continue Learning →</button>
+              <div class="hero-game-actions hidden" id="heroGameActions">
+                <button class="primary-btn" type="button" onclick="wordHuntStart()">Play Word Hunt</button>
+                <button class="primary-btn" type="button" id="heroHypeBlastButton" onclick="gameStart()">Play HYPE BLAST</button>
+              </div>
+            </div>
+            <video id="vid" src="img/hero/CYBERSAFE_PROTOTYPE.mp4" loop autoplay muted></video>
+          </div>
+
+          <div class="section-heading">
+            <div><h2>Your learning overview</h2><p>Track your progress through the module.</p></div>
+          </div>
+          <article class="panel tip-panel">
+              <div class="panel-title">
+                <h3>Tip of the day</h3>
+                <span>💡</span>
+              </div>
+
+              <div class="daily-tip-content">
+                <h4 id="dailyTipTitle"></h4>
+                <p id="dailyTip"></p>
+              </div>
+
+              <div class="daily-tip-controls">
+                <div id="dailyTipDots" class="daily-tip-dots"></div>
+
+                
+              </div>
+              <div class="daily-tip-navigation">
+                  <button class="text-btn" data-go="tips">
+                    View safety tips →
+                  </button>
+                  <div>
+                    <button id="dailyTipPrev" class="tip-nav-btn" aria-label="Previous tip">
+                      &#8592;
+                    </button>
+                    <button id="dailyTipNext" class="tip-nav-btn" aria-label="Next tip">
+                      &#8594;
+                    </button>
+                  </div>
+                  
+                </div>
+              
+            </article>
+
+          
+
+          <div class="dashboard-grid">
+            <article class="panel">
+              <div class="panel-title"><h3>Learning path</h3><span id="dashProgressText">0% complete</span></div>
+              <div class="large-progress"><div id="dashProgressBar" class="progress-fill"></div></div>
+              <div id="learningPath" class="path-list"></div>
+            </article>
+            <div class="stats-grid">
+              <article class="stat-card" onclick="navigate('lessons')"><span class="stat-icon">📚</span><div><strong id="completedLessons">0/5</strong><span>Lessons completed</span></div></article>
+              <article class="stat-card" onclick="navigate('interactive')"><span class="stat-icon">✓</span><div><strong id="whbestScore">0%</strong><span>Best Word hunt score</span></div></article>
+              <article class="stat-card" onclick="navigate('password')"><span class="stat-icon">🔐</span><div><strong id="passwordChecks">0</strong><span>Password checks</span></div></article>
+              <article class="stat-card" onclick="navigate('results')"><span class="stat-icon">⭐</span><div><strong id="points">0</strong><span>Experience</span></div></article>
+              <article class="stat-card"><span class="stat-icon">🧱</span><div><strong id="blastHighScore">0</strong><span>HYPE BLAST high score</span></div></article>
+            </div>
+            
+
+          </div>
+          <article class="panel quiz-best-scores">
+            <div class="panel-title"><h3>Quiz best scores</h3><span>Modules 1–5 and Final Boss</span></div>
+            <div id="dashboardQuizScores" class="quiz-score-list"></div>
+          </article>
+        </section>
+
+        <section class="page" id="lessons">
+          <div class="page-header"><span class="eyebrow">LEARNING</span><h1>Cybersecurity Lessons</h1><p>Complete each short lesson and test what you learned.</p></div>
+          <article class="panel lesson-quiz-action" id="lessonQuizAction" aria-live="polite">
+            <div>
+              <h2 id="lessonQuizActionTitle">Next quiz</h2>
+              <p id="lessonQuizActionMessage">Complete lessons to unlock your next quiz.</p>
+            </div>
+            <button type="button" class="primary-btn" id="lessonQuizActionButton" disabled>Quiz locked</button>
+          </article>
+          <div id="lessonGrid" class="lesson-grid"></div>
+          <div id="lessonDetail" class="panel lesson-detail hidden"></div>
+          <article id="quizScoreboard" class="panel quiz-scoreboard hidden" aria-live="polite"></article>
+        </section>
+
+        <section class="page" id="interactive">
+          <div class="page-header"><span class="eyebrow">Interactive Activity</span><h1>Games</h1><p>Select your activity and start playing! <b>More practices, More XP!</b></p></div> 
+          <article class="activity-grid" id="other-games">
+            <div class="activity-card beforestartquiz" id="beforeQuiz">
+              <h2>CyberSafe Word Hunt</h2>
+              <p>Welcome to the CyberSafe Word Hunt! Test your knowledge of cybersecurity terminology.</p> <p>Brainstorming with hunting word </p>
+              <button class="primary-btn" id="startQuiz" onclick="wordHuntStart()">Start Word Hunt</button>
+            </div>
+            <div class="activity-card beforestartquiz" id="beforeQuiz">
+              <h2>CyberSafe Phising Simulator</h2>
+              <p>Welcome to the CyberSafe Word Hunt! Test your knowledge of cybersecurity terminology.</p> <p>Brainstorming with simulation of cybersecurity</p>
+              <button class="primary-btn" id="phishingStartButton" onclick="phishingStart()">Start Simulation</button>
+            </div>
+            <div class="activity-card beforestartquiz" id="beforeQuiz">
+              <h2>CyberSafe x HYPE BLAST</h2>
+              <p>Welcome to the HYPE BLAST! Test your logic with cybersecurity questions.</p>
+              <p id="hypeBlastLockMessage">Complete the Final Boss quiz to unlock HYPE BLAST.</p>
+              <button class="primary-btn" id="startHypeBlast" onclick="gameStart()" disabled>Locked — complete Final Boss</button>
+            </div>
+          </article>
+          <div class="page-header"><h1>Stock Quiz</h1><p>Select your quiz and start playing! <b>More practices, More XP!</b></p></div> 
+          <article class="activity-grid" id="quiz">
+            <div class="activity-card beforestartquiz" id="beforeQuiz">
+              <h2>Cybersafe Quiz - Module 1</h2>
+              <p>Welcome to the CyberSafe Quiz! Test your knowledge of cybersecurity best practices.</p><strong> You need to learn all lessons in module 1 before taking the quiz.</strong>
+              <button class="primary-btn" id="startQuiz" data-module-quiz="1" onclick="startQuiz(1)">Retake Quiz</button>
+            </div>
+            <div class="activity-card beforestartquiz" id="beforeQuiz">
+              <h2>Cybersafe Quiz - Module 2</h2>
+              <p>Welcome to the CyberSafe Quiz! Test your knowledge of cybersecurity best practices.</p><strong> You need to learn all lessons in module 2 before taking the quiz.</strong>
+              <button class="primary-btn" id="startQuiz" data-module-quiz="2" onclick="startQuiz(2)">Retake Quiz</button>
+            </div>
+            <div class="activity-card beforestartquiz" id="beforeQuiz">
+              <h2>Cybersafe Quiz - Module 3</h2>
+              <p>Welcome to the CyberSafe Quiz! Test your knowledge of cybersecurity best practices.</p><strong> You need to learn all lessons in module 3 before taking the quiz.</strong>
+              <button class="primary-btn" id="startQuiz" data-module-quiz="3" onclick="startQuiz(3)">Retake Quiz</button>
+            </div>
+            <div class="activity-card beforestartquiz" id="beforeQuiz" >
+              <h2>Cybersafe Quiz - Module 4</h2>
+              <p>Welcome to the CyberSafe Quiz! Test your knowledge of cybersecurity best practices.</p><strong> You need to learn all lessons in module 4 before taking the quiz.</strong>
+              <button class="primary-btn" id="startQuiz" data-module-quiz="4" onclick="startQuiz(4)">Retake Quiz</button>
+            </div>
+            <div class="activity-card beforestartquiz" id="beforeQuiz">
+              <h2>Cybersafe Quiz - Module 5</h2>
+              <p>Welcome to the CyberSafe Quiz! Test your knowledge of cybersecurity best practices.</p><strong> You need to learn all lessons in module 5 before taking the quiz.</strong>
+              <button class="primary-btn" id="startQuiz" data-module-quiz="5" onclick="startQuiz(5)">Retake Quiz</button>
+            </div>
+            <div class="activity-card beforestartquiz" id="beforeQuiz">
+              <h2>Cybersafe Quiz - Final Boss</h2>
+              <p>Welcome to the CyberSafe Quiz! Test your knowledge of cybersecurity best practices.</p><strong> You need to learn all lessons before taking the quiz.</strong>
+              <button class="primary-btn" id="startQuiz" data-final-quiz onclick="startQuiz(false)">Retake Quiz</button>
+            </div>
+          </article>
+          
+        </section>
+        <div class="quiz-card panel" id="quizCard">
+          <div id="quizheight"></div>
+          <img src="img/vector/exit.svg" class="close-card" onclick="closeQuiz()">
+          <div class="quiz-top"><span id="quizNumber">Question 1 of 8</span><span id="quizScore">Score: 0</span><span id="quizTimer" class="quiz-timer" role="timer" aria-label="Time remaining" aria-live="off">15s</span></div>
+          <div class="quiz-progress"><div id="quizProgress"></div></div>
+          <div id="quizContent"></div>
+        </div>
+        <section class="page" id="leaderboard">
+          <div class="page-header">
+            <span class="eyebrow">BEST OVERALL SCORES</span>
+            <h1>Leaderboard</h1>
+            <p>See the sample top scores and XP earned by your classmates.</p>
+          </div>
+          <div class="leaderboard-grid">
+            <article class="panel leaderboard-panel">
+              <div class="panel-title">
+                <h2>HYPE BLAST</h2>
+                <span>Highest score</span>
+              </div>
+              <div class="leaderboard-table-wrap">
+                <table class="leaderboard-table">
+                  <thead>
+                    <tr><th scope="col">Rank</th><th scope="col">Student</th><th scope="col">Grade / Strand</th><th scope="col">Section</th><th scope="col">Score</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td><span class="leaderboard-rank">01</span></td><th scope="row">Nathan</th><td>12 · STEM</td><td>Reliable</td><td class="leaderboard-score">27,992</td></tr>
+                    <tr><td><span class="leaderboard-rank">02</span></td><th scope="row">Juan</th><td>12 · HE</td><td>Innovative</td><td class="leaderboard-score">16,543</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+            <article class="panel leaderboard-panel">
+              <div class="panel-title">
+                <h2>HIGHEST XP</h2>
+                <span>Best XP score</span>
+              </div>
+              <div class="leaderboard-table-wrap">
+                <table class="leaderboard-table">
+                  <thead>
+                    <tr><th scope="col">Rank</th><th scope="col">Student</th><th scope="col">Grade / Strand</th><th scope="col">Section</th><th scope="col">XP</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr><td><span class="leaderboard-rank">01</span></td><th scope="row">Cheska</th><td>12 · ICT</td><td>Modest</td><td class="leaderboard-score">2,122</td></tr>
+                    <tr><td><span class="leaderboard-rank">02</span></td><th scope="row">Nicole</th><td>12 · HUMSS</td><td>Obedient</td><td class="leaderboard-score">1,921</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </article>
+          </div>
+          <p class="leaderboard-note">Sample leaderboard data for display only.</p>
+        </section>
+
+        <section class="page" id="password">
+          <div class="page-header"><span class="eyebrow">SECURITY TOOL</span><h1>Password Tools</h1><p>Practice creating stronger passwords and learn why password security matters.</p></div>
+          <div class="tools-grid">
+            <article class="panel">
+              <div class="panel-title"><h3>Password strength checker</h3><span>🔐</span></div>
+              <label for="passwordInput">Enter a sample password</label>
+              <div class="password-input"><input id="passwordInput" type="password" placeholder="Type a password"><button id="togglePassword">Show</button></div>
+              <div class="strength-meter"><div id="strengthBar"></div></div>
+              <strong id="strengthLabel">Enter a password</strong>
+              <ul id="strengthDetails" class="check-list"></ul>
+              <p class="notice">For safety, do not enter a real password you use for an important account.</p>
+            </article>
+            <article class="panel">
+              <div class="panel-title"><h3>Password generator</h3><span>⚙</span></div>
+              <label for="lengthRange">Length: <strong id="lengthValue">16</strong></label>
+              <input id="lengthRange" type="range" min="8" max="32" value="16">
+              <div class="option-list">
+                <label><input type="checkbox" id="genUpper" checked> Uppercase letters</label>
+                <label><input type="checkbox" id="genNumbers" checked> Numbers</label>
+                <label><input type="checkbox" id="genSymbols" checked> Symbols</label>
+              </div>
+              <div class="generated"><span id="generatedPassword">Click Generate</span><button id="copyPassword">Copy</button></div>
+              <button class="primary-btn full" id="generatePassword">Generate Password</button>
+            </article>
+          </div>
+        </section>
+
+        <section class="page" id="tips">
+          <div class="page-header"><span class="eyebrow">QUICK REFERENCE</span><h1>Cyber Safety Tips</h1><p>Simple habits that can reduce common cybersecurity risks.</p></div>
+          <div id="tipsGrid" class="tips-grid"></div>
+        </section>
+
+        <section class="page" id="results">
+          <div class="page-header"><span class="eyebrow">YOUR ACTIVITY</span><h1>My Results</h1><p>Review your learning activity and quiz performance.</p></div>
+          <div class="results-grid">
+            <article class="panel result-main">
+              <div class="panel-title"><h3>Overall progress</h3><strong id="resultPercent">0%</strong></div>
+              <div class="large-progress"><div id="resultProgressBar" class="progress-fill"></div></div>
+              <div class="result-stats">
+                <div><strong id="resultLessons">0</strong><span>Lessons</span></div>
+                <div><strong id="resultBestWH">0%</strong><span>WH Best score</span></div>
+                <div><strong id="resultPhishingBestScore">0%</strong><span>Phishing Best score</span></div>
+                <div><strong id="resultPoints">0</strong><span>XP</span></div>
+                <div><strong id="resultBlastHighScore">0</strong><span>HYPE BLAST high score</span></div>
+              </div>
+            </article>
+            <article class="panel quiz-best-scores">
+              <div class="panel-title"><h3>Quiz best scores</h3><span>Modules 1–5 and Final Boss</span></div>
+              <div id="resultsQuizScores" class="quiz-score-list"></div>
+            </article>
+          </div>
+          <article class="panel">
+            <div class="panel-title"><h3>Achievements</h3><span>🏆</span></div>
+            <div id="badges" class="badges"></div>
+          </article>
+          <article class="panel activity-panel">
+            <div class="panel-title"><h3>Recent activity</h3></div>
+            <div id="activityLog"></div>
+          </article>
+        </section>
+
+        <section class="page" id="settings">
+          <div class="page-header"><span class="eyebrow">PREFERENCES</span><h1>Settings</h1><p>Customize the prototype experience.</p></div>
+          <div class="panel settings-panel">
+            <div class="setting-row"><div><strong>Theme</strong><span>Choose the appearance of CyberSafe.</span></div><select id="themeSelect"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
+            <div class="setting-row"><div><strong>Reset prototype data</strong><span>Clear lessons, quiz scores, experience, and activity.</span></div><button class="danger-btn" id="resetData">Reset Data</button></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Word Hunt Game. Credits from AI and Me from layout-->
+  <main class="word-hunt-game" id="wordHuntCard">
+    <header class="game-header">
+      <div id="navbar3"></div>
+      <div class="headercont">
+        <img id="restart" type="button" src="img/vector/restart.svg" height="50" width="50">
+        <h3>Word Hunt</h3>
+        <img id="closewh" src="img/vector/exit.svg" class="close-card" onclick="wordHuntClose()">
+      </div>
+    
+    </header>
+    
+
+    
+    
+    <div class="board-wrapper">
+      <div id="board" class="board"
+           role="group" aria-label="Word hunt letter grid"></div>
+    </div>
+    <p id="message" role="status" aria-live="polite">
+      Tap a starting letter, then tap the ending letter.
+    </p>
+    <div class="grid-stats">
+          <section class="stats">
+            <div class="stat">
+              <span>Score</span>
+              <strong id="score">0</strong>
+            </div>
+            <div class="stat">
+              <span>Found</span>
+              <strong id="found">0 / 8</strong>
+            </div>
+            <div class="stat">
+              <span>Time</span>
+              <strong id="timer">02:00</strong>
+            </div>
+          </section>
+        </div>
+    <section class="word-section">
+      <h2>Words to find</h2>
+      <div id="word-list" class="word-list"></div>
+    </section>
+
+  </main>
+  <!-- Word Hunt Game. Credits from AI and Me from layout-->
+  <main class="word-hunt-game" id="phisingCard">
+    <div id="navbar4"></div>
+    <h3 class="centered-title">CyberSafe Simulator</h3>
+    <img  src="img/vector/exit.svg" class="close-card" onclick="phishingClose()">
+
+    <section class="stats">
+      <div class="stat">
+        <span>Scenario</span>
+        <strong id="progress">1 / 5</strong>
+      </div>
+      <div class="stat">
+        <span>Score</span>
+        <strong id="phishingscore">0</strong>
+      </div>
+      <div class="stat">
+        <span>Accuracy</span>
+        <strong id="accuracy">0%</strong>
+      </div>
+    </section>
+
+    <section class="email-card" id="game1">
+      <div class="card-heading">
+        <div>
+          <p class="eyebrow">INCOMING MESSAGE</p>
+          <h2 id="emailSubject">Loading email...</h2>
+        </div>
+        <span class="mail-icon">✉</span>
+      </div>
+
+      <div class="email-meta">
+        <div class="avatar" id="avatar">?</div>
+        <div class="sender-info">
+          <strong id="sender">Sender</strong>
+          <span id="emailAddress">sender@example.com</span>
+        </div>
+        <span class="tag" id="emailTag">Email</span>
+      </div>
+
+      <div class="email-body" id="emailBody"></div>
+
+      <div class="clue-box">
+        <strong>Investigator tip</strong>
+        <p>Check the sender, links, urgency, requests, and context.</p>
+      </div>
+
+      <div class="decision-area" id="decisionArea">
+        <h3>What is your assessment?</h3>
+        <div class="decision-buttons">
+          <button class="btn phishing" data-answer="phishing">
+            ⚠ Phishing
+          </button>
+          <button class="btn legitimate" data-answer="legitimate">
+            ✓ Legitimate
+          </button>
+        </div>
+      </div>
+
+      <div id="feedback" class="feedback" hidden aria-live="polite">
+        <h3 id="feedbackTitle"></h3>
+        <p id="feedbackText"></p>
+        <div id="cluesFound"></div>
+        <button id="nextBtn" class="btn primary">Next scenario →</button>
+      </div>
+    </section>
+
+    <section class="rules" id="rules1">
+      <h2>Remember these safety rules</h2>
+      <ul>
+        <li>Verify unexpected messages through an official channel.</li>
+        <li>Inspect the actual sender address and link destination.</li>
+        <li>Never share passwords or verification codes through email.</li>
+        <li>Urgency and threats are common social-engineering tactics.</li>
+      </ul>
+    </section>
+
+    <section id="results1" class="results" hidden>
+      <div class="result-icon">✓</div>
+      <p class="eyebrow">SIMULATION COMPLETE</p>
+      <h2 id="resultHeading">Well done!</h2>
+      <p id="resultSummary"></p>
+      <button id="restartBtn" class="btn primary">Try again ↻</button>
+    </section>
+
+    
+  </main>
+  
+  <!-- CyberSafe with Collab of HYPE BLAST-->
+   <div class="game-content" id="blastCon">
+    <div class="close-lay" id="navbar5">
+      <img onclick="gameBlasterClose()" class="close-card" alt="close">
+    </div>
+            <div class="blastLog" id="blastLog">
+              <input type="checkbox" id="showLogs">
+            <span> Show Logs</span> 
+            <h3 id="levelDisplay">Project Codename BLAST-GENEROUS (a.k.a HYPE BLAST)</h3>
+            
+            
+            <h4 id="pieceinf"></h4>
+            <p id="datainf"></p>
+            </div>
+            <div class="overlay"></div>
+            <div class="quest">
+                <h2>Questions</h2>
+                <span id="subtag">Module</span>
+                <p id="scenario_quiz" class="quiz-scenario"></p>
+                <h3 id="quest-title">Question Title</h3>
+                <div id="quest-options">
+                    <button id="opt1" class="quest-option">Option 1</button>
+                    <button id="opt2" class="quest-option">Option 2</button>
+                    <button id="opt3" class="quest-option">Option 3</button>
+                    <button id="opt4" class="quest-option">Option 4</button>
+                </div>
+                <p id="ansfeed" class="quiz-feedback" aria-live="polite"></p>
+                <footer class="quest-score-footer" aria-live="polite">
+                    <span>Current score: <strong id="questCurrentScore">0</strong></span>
+                    <span id="questScorePoints">Correct answer: +500 points</span>
+                </footer>
+            </div>
+            <div class="scorebox" id="scorebox">
+                
+                <div>
+                <div class="score" id="highScore">High Score:</div></div>
+                <div class="score" id="scoreDisplay">0</div>
+                <div class="score" id="comboDisplay">Combo: 0</div>
+            <div class="score" id="questogo">3 left cleared moves to get question</div></div>
+            <canvas id="gameCanvas" width="500" height="500"></canvas>
+            <canvas id="explosionCanvas"></canvas>
+            <div id="pieceSelection">
+                <canvas class="pieceCanvas" width="80" height="80" cancelable="true"></canvas>
+                <canvas class="pieceCanvas" width="80" height="80" cancelable="true"></canvas>
+                <canvas class="pieceCanvas" width="80" height="80" cancelable="true"></canvas>
+            </div>
+            
+        </div>
+        <div class="game-over hide" id="game-over">
+            <h1>Game Over</h1>
+            <table>
+                <tr>
+                    <th>Your Score</th>
+                    <th>Lines Cleared</th>
+                    <th>High Score</th>
+                </tr>
+                <tr>
+                    <td id="finalScore">0</td>
+                    <td id="finalLines">0</td>
+                    <td id="finalHighScoreValue">0</td>
+                </tr>
+            </table>
+            <p id="finalXp" class="game-over-xp">XP earned: 0</p>
+            <button class="primary-btn" onclick="tryAgain()">Play Again</button>
+            <button class="primary-btn" onclick="gameBlasterClose()">Close</button>
+        </div>
+  
+    
+  <div id="overlay"></div>
+  <div id="toast" class="toast"></div>
+  <!-- CyberSafe JS -->
+   <script src="js/password_gen.js"></script>
+   <script src="js/data/module1.js"></script>
+   <script src="js/data/module2.js"></script>
+   <script src="js/data/module3.js"></script>
+   <script src="js/data/module4.js"></script>
+   <script src="js/data/module5.js"></script>
+   <script src="js/data/finalboss.js"></script>
+   <script src="js/mainquiz.js"></script>
+   <script src="js/otherinteractivity/phisingsimulation.js"></script>
+  <script src="js/script.js"></script>
+  <!-- Android Bridge / Android App requests -->
+  <script>
+    let navbarheight = 0;
+        function updateMargins() {
+            // Confirm the native interface bridge exists
+            if (window.AndroidBridge) {
+                document.getElementById("titlename").innerHTML = "CyberSafe Android"
+                // Get DP measurements directly from Java
+                const navBar = window.AndroidBridge.getStatusBarDp();
+                
+                navbarheight = navBar;
+                // Apply heights as padding or margins
+                document.getElementById("navbar").style.height = navBar + "px"
+                document.getElementById("navbar2").style.height = navBar + "px"
+                document.getElementById("navbar3").style.height = navBar + "px"
+                document.getElementById("navbar4").style.height = navBar + "px"
+                document.getElementById("quizheight").style.height = navBar + "px"
+                document.getElementById("navbar5").style.marginTop = navBar + "px"
+                document.getElementById("blastLog").style.top = navBar + "px"
+                document.getElementById("heightmargin").style.height = document.getElementById("topbar").offsetHeight + "px"
+            }
+        }
+        // Run immediately when script loads or during DOMContentLoaded
+        window.addEventListener('DOMContentLoaded', updateMargins);
+        document.getElementById("vid").addEventListener("loadeddata", () => {
+            if (window.AndroidBridge) {
+                AndroidBridge.allowWebView();
+            }
+        });
+    </script>
+  <script src="js/data/lessons.js"></script>
+  <script src="js/lesson.js"></script>
+  <script src="js/otherinteractivity/wordhunt.js"></script>
+  <script src="js/data/tips.js"></script>
+  <script src="js/dailyTip.js"></script>
+  <script src="js/load.js"></script>
+
+  <!-- HYPE-BLAST Base Logic, Front UI Functionality-->
+  <!-- Game Grid -->
+      <script src="js/grid/canPlacepiece.js"></script>
+      <script src="js/grid/checkclearlines.js"></script>
+      <script src="js/grid/clearablelines.js"></script>
+      <script src="js/grid/placepiece.js"></script>
+      <!-- Math Logic -->
+      <script src="js/math/clientToGrid.js"></script>
+      <script src="js/math/easeInOut.js"></script>
+      <script src="js/math/probabilityRandomChoice.js"></script>
+      <script src="js/math/gridDistance.js"></script>
+      <script src="js/math/pattern.js"></script>
+      <script src="js/math/probabilityRandomChoice.js"></script>
+      <script src="js/math/randcolors.js"></script>
+      <script src="js/math/randomPiece.js"></script>
+      <script src="js/math/rotatePiece.js"></script>
+      <script src="js/math/score.js"></script>
+      <script src="js/math/wait.js"></script>
+    <!-- Miscellanous -->
+      <script src="js/misc/gameOver.js"></script>
+      <script src="js/misc/settings.js"></script>
+      <script src="js/misc/showLogs.js"></script>
+    <!-- Render -->
+      <script src="js/render/gameboard.js"></script>
+        <script src="js/render/particle.js"></script>   
+      <script src="js/render/piece.js"></script>
+        <script src="js/render/tileImages.js"></script>
+        <script src="js/render/rainbow.js"></script>
+    <!-- User Interactions -->
+      <script src="js/userinteractions/mousedown.js"></script>
+      <script src="js/userinteractions/mousemove.js"></script>
+      <script src="js/userinteractions/mouseup.js"></script>
+      <script src="js/userinteractions/touchstart.js"></script>
+      <script src="js/userinteractions/touchmove.js"></script>
+      <script src="js/userinteractions/touchend.js"></script>
+      <!--Load JS -->
+      <script src="js/loadcanvas.js"></script>
+    <!-- Quiz -->
+    <script src="js/quiz.js"></script>
+      <script src="localQuiz/mixed.js"></script>
+      <script src="localQuiz/mod1.js"></script>
+    <script src="localQuiz/mod2.js"></script>
+    <script src="localQuiz/mod3.js"></script>
+    <script src="localQuiz/mod4.js"></script>
+    <script src="localQuiz/mod5.js"></script>
+</body>
+</html>

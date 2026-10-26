@@ -1,0 +1,488 @@
+/* HYPE BLAST x CyberSafe collab*/
+
+.game-content{
+    color: #fff;
+}
+
+#gameCanvas {
+    position: fixed;
+    background-color: #1a1a1a;
+    border: 2px solid #ccc;
+    z-index: 0;
+    left: 5%;
+    top:50%;
+    transform: translateY(-50%);
+    z-index: 50;
+}
+#pieceSelection {
+    margin-top: 10px;
+    z-index: 1;
+    position: fixed;
+    bottom: 5%;
+    right: 5%;
+    z-index: 50;
+}
+#explosionCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 1000;
+    display: block;
+}
+.particle {
+    position: absolute;
+    width: 10px; /* Particle size */
+    height: 10px; /* Particle size */
+    pointer-events: none; /* Particles should not block clicks */
+    opacity: 1;
+}
+.userlayout {
+    display: grid;
+    grid-template-areas:
+        'playerhighicon playerhighname'
+        'playerhighicon deschighplayer';
+    background-color: #121233;
+    padding: 12px;
+    color: black;
+    border-radius: 6px;
+    color: white;
+    border: 2px solid lightblue;
+    margin: 8px;
+}
+.pieceCanvas {
+    cursor: pointer;
+}
+.scorebox{
+    position: fixed;
+    right: 5%;
+    top:  5%;;
+    text-align: right;
+    z-index: 58;
+}
+#scoreDisplay{
+    font-weight: bold;
+    font-size: 32px;
+}
+.game-content{
+    display: none;
+}
+#comboDisplay{
+    font-size: 16px;
+}
+.top-placed{
+    grid-area: playrtopplaced;
+}
+.playericon{
+    grid-area: playerhighicon;
+    margin-right: 8px;;
+}
+.playername{
+    grid-area: playerhighname;
+    font-weight: bold;
+}
+.playerscore{
+    grid-area: playerhighscore;
+}
+.descplayer{
+    grid-area: deschighplayer;
+    font-size: 0.8rem;
+}
+.playerhighscore{
+    font-size: 8px;
+    width: 200px;
+    display: grid;
+    grid-template-areas: 'playrtopplaced playerhighicon playerhighname playerhighscore'
+     'playrtopplaced playerhighicon deschighplayer playerhighscore';
+    align-items: center;
+    grid-template-columns: 1fr 1fr 6fr 1fr;
+    margin-top: 10px;
+
+}
+#scorehighlight_pc{
+    display: none;
+    position: fixed;
+    right: 5%;
+    top: 50%;
+    transform: translateY(-50%);
+    background: rgba(255,255,255,0.1);
+    padding: 15px;
+    border-radius: 8px;
+}
+#scorehighlight_pc header{
+    font-size: 8px;
+    display: flex;
+    justify-content: space-between;;
+    align-items: end;
+    padding-bottom:4px;
+    box-sizing: content-box;
+    border-bottom: 1px solid black;
+    margin-bottom: 4px;
+
+}
+#scorehighlight_pc header h1{
+    margin: 0 4px;
+}
+#overall-user{
+    color: rgba(255,255,255,0.8);
+}
+#overall-players{
+    font-size: 18px;
+    font-weight: 600;
+    color: white;
+}
+.intro{
+    display: flex;
+    flex-direction: column;
+}
+.intro header{
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 0.5rem 1rem;
+    background: rgba(0,0,0,0.5);
+}
+.title{
+    font-size: 2.5rem;
+}
+.menus{
+    flex-grow: 1;
+    position: relative;
+}
+
+/* navigation list */
+.menus ul {
+    list-style: none;
+    display: flex;
+    gap: 1rem;
+    margin: 0;
+    padding: 0;
+}
+
+.menus li a {
+    color: #fff;
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    display: block;
+}
+
+/* hamburger toggle for small screens */
+.menu-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0.5rem;
+}
+#subtag{
+    position: absolute;
+    top: 8%;
+    right: 5%;
+    background-color: rgba(255,255,255,0.08);
+    padding: 8px;
+    font-size: 0.6rem;
+    border-radius: 4px;
+}
+.quest{
+    position: fixed;
+    z-index: 59;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    padding: 19px;
+    background-color: var(--bg);
+    color: var(--text);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    border-radius: 8px;
+    width: 75%;
+    transition: all  0.2s ease;
+
+}
+
+.overlay{
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100vh;
+    backdrop-filter: blur(25px);
+    z-index: 59;
+    transition: all 0.2s ease;
+}
+.overlay.hide{
+    backdrop-filter: blur(0px);
+    z-index: -1;
+}
+#quest-title{
+    font-weight: 400;
+    margin: 12px 0;
+}
+
+.quiz-scenario,
+.quiz-feedback{
+    margin: 8px 0;
+    line-height: 1.5;
+}
+
+.quiz-scenario{
+    color: rgba(255,255,255,0.75);
+}
+
+.quiz-feedback.correct{
+    color: #9fffa0;
+}
+
+.quiz-feedback.wrong{
+    color: #ff9999;
+}
+
+.quiz-feedback{
+    font-weight: 600;
+}
+
+.quest-score-footer{
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.18);
+    color: rgba(255,255,255,0.8);
+    font-size: 0.9rem;
+}
+
+.quest-score-footer strong{
+    color: #fff;
+}
+
+#questScorePoints{
+    color: #9fffa0;
+    font-weight: 700;
+    text-align: right;
+}
+
+@keyframes ripple-correct {
+    from {
+        background-color: #0e0e10;
+    }
+    to {
+        background-color: #00aa00;
+    }
+}
+
+@keyframes ripple-wrong {
+    from {
+        background-color: #0e0e10;
+    }
+    to {
+        background-color: #aa0000;
+    }
+}
+
+.quest-option {
+    position: relative;
+    display: block;
+    width: 100%;
+    padding: 8px 24px;
+    text-align: left;
+    margin: 8px 0;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background-color: #0e0e10;
+    color: white;
+    transition: all 0.3s ease;
+    overflow: hidden;
+}
+
+.quest-option::before{
+    content: '';
+    position: absolute;
+    width: 0%;
+    height: 0%;
+    z-index: -1;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    border-radius: inherit;
+}
+
+.quest-option:hover{
+    background-color: #1e2a31;
+}
+
+/* Mobile touch feedback */
+
+
+/* Correct answer - Green with ripple */
+.quest-option.correct {
+    background-color: #00aa00;
+    border-color: #00ff00;
+    color: #ffffff;
+    animation: ripple-correct 0.6s ease-out;
+}
+
+/* Wrong answer - Red with ripple */
+.quest-option.wrong {
+    background-color: #aa0000;
+    border-color: #ff0000;
+    color: #ffffff;
+    animation: ripple-wrong 0.6s ease-out;
+}
+
+.quest-options{
+    margin: 12px;
+}
+.intro{
+    height: 100vh;  
+}
+.intro main{
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    flex-grow: 1;
+    justify-content: center;
+    align-items: center;
+}
+.btn{
+    grid-column: 1/3;
+    position: relative;
+}
+.btn *{
+    position: relative;
+    left: 50%;
+    top:0;
+    transform: translateX(-50%);
+    text-align: center;
+}
+
+.animateintro{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.gameinfo{
+    padding: 42px;
+}
+table, th, td{
+    text-wrap: nowrap;
+    font-size: 18px;
+    padding: 8px;
+}
+#highScore{
+    background-color:#ffff00;
+    color:black;
+    padding: 6px 12px;
+    margin: auto;
+    font-weight: bold;
+    text-wrap: nowrap;
+    width: min-content
+}
+.game-over{
+    border-radius: 12px;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    padding: 16px 32px;
+    background-color: var(--bg);
+    color: var(--text);
+    border-top: 1px solid rgba(255,255,255,0.1);
+    transition: all 0.3s ease;
+    z-index: 60;
+}
+
+.game-over-xp{
+    color: var(--text);
+    font-weight: 700;
+}
+
+table td{
+    text-align: center;
+}
+table{
+    
+    background-color: var(--surface);
+    margin: 8px;
+
+}
+.blastLog{
+    position: fixed;
+    top: 0;
+    z-index: 52;
+}
+@media (max-width: 600px) {
+    #gameCanvas {
+        width: 90vw;
+        height: 90vw;
+    }
+    .scorebox{
+        width: 100vw;
+        text-align: center;
+        right:0;
+    }
+    #pieceSelection{
+        right: 0;
+        width: 100%;
+        bottom: 10%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    .intro main{
+        display: flex;
+        flex-direction: column;
+    }
+    .gameinfo{
+        flex-grow:1;
+    }
+    .btn{
+        flex-grow:1;
+    }
+    .game-over{
+        width: 100%;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+        padding: 14px 26px;
+        text-align: center;
+    }
+    .game-over button{
+        margin: 11px 16px;
+    }
+    .quest{
+        width: 95%;
+    }
+}
+.quest.hide,.game-over.hide{
+    top: 150%;
+}
+@media (hover: hover) {
+        
+    .quest-option:hover{
+        color: white;
+    }
+}
+.close-lay .close-card{
+    background-color: none;
+    margin: 8px;
+}
+.close-lay{
+    position: fixed;
+    top: 5%;
+    z-index: 53;
+    left: 5%;
+    background: var(--surface);
+    border-radius: 50%;
+}
+@media (hover: none) and (pointer: coarse) {
+    .quest-option:active {
+        background-color: #1e2a31;
+        transform: scale(0.98);
+    }
+}
