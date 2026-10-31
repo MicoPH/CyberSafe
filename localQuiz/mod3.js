@@ -1,5 +1,44 @@
 const sample2 = [
     {
+    question: "What is a passkey?",
+    scenario: "A website offers passkey sign-in as an alternative to a password.",
+    answers: [
+      "A password written on paper.",
+      "A cryptographic credential used to authenticate access to an account.",
+      "A publicly shared recovery code.",
+      "A shared login for friends."
+    ],
+    ans: 1,
+    why: "Passkeys use cryptographic authentication and can reduce reliance on passwords.",
+    subject: "Module 3"
+  },
+  {
+    question: "You receive a login alert from an unfamiliar location. What should you do?",
+    scenario: "You did not attempt to sign in from that location.",
+    answers: [
+      "Ignore every future alert.",
+      "Send your password to the alert sender.",
+      "Review account activity through the official service and secure the account.",
+      "Post your account details publicly."
+    ],
+    ans: 2,
+    why: "Review activity through official settings and revoke unfamiliar sessions.",
+    subject: "Module 3"
+  },
+  {
+    question: "How should you store account recovery codes?",
+    scenario: "An online service provides backup codes for account recovery.",
+    answers: [
+      "In a public group chat.",
+      "In an unlocked document shared with everyone.",
+      "With an unknown contact.",
+      "In a secure location protected from unauthorized access."
+    ],
+    ans: 3,
+    why: "Recovery codes should remain accessible to you but protected from other people.",
+    subject: "Module 3"
+  },
+  {
     question: "Why should you lock your phone when you are not using it?",
     scenario: "You leave your phone unattended in a classroom.",
     answers: [

@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="CyberSafe administrator quiz upload">
+  <title>CyberSafe | Admin Quiz Upload</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: Arial, Helvetica, sans-serif;
+      color: #172554;
+      background: #f3f6fb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 32px 16px;
+    }
+
+    main {
+      width: min(100%, 680px);
+      margin: 0 auto;
+    }
+
+    header,
+    form,
+    .notice {
+      background: #fff;
+      border: 1px solid #dbe3ef;
+      border-radius: 12px;
+      padding: 24px;
+    }
+
+    header {
+      margin-bottom: 16px;
+    }
+
+    h1,
+    h2,
+    p {
+      margin-top: 0;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+      font-size: 1.65rem;
+    }
+
+    h2 {
+      margin-bottom: 8px;
+      font-size: 1.15rem;
+    }
+
+    .muted,
+    .help {
+      color: #52627a;
+      line-height: 1.5;
+    }
+
+    .notice {
+      margin-bottom: 16px;
+      border-color: #f4cf77;
+      background: #fff9e8;
+      color: #694b00;
+      line-height: 1.5;
+    }
+
+    .field {
+      margin-top: 18px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 7px;
+      font-weight: 700;
+    }
+
+    input {
+      width: 100%;
+      min-height: 44px;
+      border: 1px solid #b9c5d6;
+      border-radius: 7px;
+      padding: 10px 12px;
+      font: inherit;
+    }
+
+    input:focus {
+      border-color: #2459b3;
+      outline: 3px solid #dbeafe;
+    }
+
+    .help {
+      margin: 7px 0 0;
+      font-size: 0.9rem;
+    }
+
+    button {
+      min-height: 44px;
+      margin-top: 22px;
+      border: 0;
+      border-radius: 7px;
+      padding: 10px 16px;
+      background: #174ea6;
+      color: #fff;
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #123d83;
+    }
+
+    #fileStatus,
+    #submitStatus {
+      margin: 14px 0 0;
+      line-height: 1.5;
+    }
+
+    #fileStatus[role="status"],
+    #submitStatus[role="status"] {
+      color: #174b2b;
+    }
+
+    #fileStatus[role="alert"],
+    #submitStatus[role="alert"] {
+      color: #a32121;
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 16px 10px;
+      }
+
+      header,
+      form,
+      .notice {
+        padding: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <p class="muted">CYBERSAFE · ADMIN</p>
+      <h1>Upload a quiz</h1>
+      <p class="muted">Sign in with an administrator account to upload a quiz.</p>
+    </header>
+
+    <section class="notice" aria-label="Setup status">
+      Only the configured Firebase administrator account can upload. Students can read quiz questions and submit one
+      locked attempt per quiz version. Answer keys stay admin-only; trusted grading is not available on the Spark plan.
+    </section>
+
+    <section aria-labelledby="authHeading">
+      <h2 id="authHeading">Admin sign-in</h2>
+      <form id="adminAuthForm">
+        <div class="field">
+          <label for="adminEmail">Admin email</label>
+          <input id="adminEmail" name="email" type="email" autocomplete="username" required>
+        </div>
+        <div class="field">
+          <label for="adminPassword">Password</label>
+          <input id="adminPassword" name="password" type="password" autocomplete="current-password" required>
+        </div>
+        <button type="submit" id="signInButton">Sign in as admin</button>
+        <button type="button" id="signOutButton" hidden>Sign out</button>
+        <p id="authStatus" aria-live="polite"></p>
+      </form>
+    </section>
+
+    <section id="lessonMigrationSection" hidden aria-labelledby="lessonMigrationHeading">
+      <h2 id="lessonMigrationHeading">Move module lessons to Firestore</h2>
+      <p class="help">Imports all bundled lessons into the Firestore <code>lessons</code> collection, replacing matching IDs and removing lesson documents not in the source.</p>
+      <button type="button" id="importLessonsButton">Import all lessons</button>
+      <p id="lessonImportStatus" aria-live="polite"></p>
+    </section>
+
+    <form id="quizUploadForm" hidden>
+      <section aria-labelledby="quizHeading">
+        <h2 id="quizHeading">Quiz upload</h2>
+        <div class="field">
+          <label for="moduleId">Quiz ID</label>
+          <select id="moduleId" name="moduleId" required>
+            <option value="">Select a quiz</option>
+            <option value="1">Module 1 — Introduction to Cybersecurity</option>
+            <option value="2">Module 2 — Phishing, Fake Websites, and Scam Activities</option>
+            <option value="3">Module 3 — Passwords, Privacy, and Account Guides</option>
+            <option value="4">Module 4 — Device Safety Lessons and Reminders</option>
+            <option value="5">Module 5 — Practical Scenarios and Response Guides</option>
+            <option value="6">Final Boss</option>
+          </select>
+          <p class="help">Use IDs 1–5 for module quizzes or ID 6 for the Final Boss. This ID tells the student app which quiz to load.</p>
+        </div>
+        <div class="field">
+          <label for="quizFile">Quiz JSON file</label>
+          <input id="quizFile" name="quizFile" type="file" accept=".json,application/json" required>
+          <p class="help">Use an array of questions with <code>q</code>, <code>answers</code>, and <code>correct</code> fields. The question text may also use <code>question</code>, and the answer index may use <code>ans</code>.</p>
+        </div>
+        <p id="fileStatus" aria-live="polite"></p>
+      </section>
+
+      <button type="submit" id="uploadButton">Upload quiz</button>
+      <p id="submitStatus" aria-live="polite"></p>
+    </form>
+  </main>
+
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+  <script src="js/data/lessons.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyB403LLB8yGnXDwq1wIE0Y_InVa21AlPY8",
+      authDomain: "cybersafe-11a37.firebaseapp.com",
+      databaseURL: "https://cybersafe-11a37-default-rtdb.asia-southeast1.firebasedatabase.app",
+      projectId: "cybersafe-11a37"
+    };
+    const ADMIN_UID = "CiAfx7qxaxciuavJBav2dLBHdLU2";
+    firebase.initializeApp(firebaseConfig);
+
+    const auth = firebase.auth();
+    const database = firebase.database();
+    const firestore = firebase.firestore();
+    const adminAuthForm = document.getElementById("adminAuthForm");
+    const quizUploadForm = document.getElementById("quizUploadForm");
+    const authStatus = document.getElementById("authStatus");
+    const moduleIdInput = document.getElementById("moduleId");
+    const quizFile = document.getElementById("quizFile");
+    const fileStatus = document.getElementById("fileStatus");
+    const submitStatus = document.getElementById("submitStatus");
+    const signInButton = document.getElementById("signInButton");
+    const signOutButton = document.getElementById("signOutButton");
+    const uploadButton = document.getElementById("uploadButton");
+    const lessonMigrationSection = document.getElementById("lessonMigrationSection");
+    const importLessonsButton = document.getElementById("importLessonsButton");
+    const lessonImportStatus = document.getElementById("lessonImportStatus");
+    let selectedQuizIsValid = false;
+    let selectedQuiz = null;
+    let isAdmin = false;
+
+    quizFile.addEventListener("change", async () => {
+      selectedQuizIsValid = false;
+      selectedQuiz = null;
+      fileStatus.textContent = "";
+      fileStatus.setAttribute("role", "alert");
+
+      const file = quizFile.files[0];
+      if (!file) return;
+
+      try {
+        const content = JSON.parse(await file.text());
+        const questions = Array.isArray(content) ? content : content.questions;
+        if (!Array.isArray(questions) || questions.length === 0) {
+          throw new Error("The JSON must contain a non-empty question array, either as the root array or in a questions property.");
+        }
+
+        selectedQuiz = questions.map((question, index) => {
+          const prompt = question.q || question.question;
+          const correct = Number.isInteger(question.correct) ? question.correct : question.ans;
+          if (typeof prompt !== "string" || !prompt.trim()) {
+            throw new Error(`Question ${index + 1} needs a q or question text.`);
+          }
+          if (!Array.isArray(question.answers) || question.answers.length < 2 ||
+              question.answers.some(answer => typeof answer !== "string" || !answer.trim())) {
+            throw new Error(`Question ${index + 1} needs at least two non-empty answer strings.`);
+          }
+          if (!Number.isInteger(correct) || correct < 0 || correct >= question.answers.length) {
+            throw new Error(`Question ${index + 1} needs a valid zero-based correct or ans answer index.`);
+          }
+
+          return {
+            publicQuestion: {
+              q: prompt.trim(),
+              scenario: typeof question.scenario === "string" ? question.scenario : "",
+              answers: question.answers,
+              why: typeof question.why === "string" ? question.why : ""
+            },
+            correct
+          };
+        });
+        selectedQuizIsValid = true;
+        fileStatus.setAttribute("role", "status");
+        fileStatus.textContent = `Valid quiz selected: ${file.name} (${selectedQuiz.length} questions).`;
+      } catch (error) {
+        fileStatus.textContent = `Could not read a valid quiz JSON file: ${error.message}`;
+      }
+    });
+
+    function showAuthMessage(message, isError) {
+      authStatus.textContent = message;
+      authStatus.setAttribute("role", isError ? "alert" : "status");
+    }
+
+    function showUploadMessage(message, isError) {
+      submitStatus.textContent = message;
+      submitStatus.setAttribute("role", isError ? "alert" : "status");
+    }
+
+    async function checkAdminAccess(user) {
+      if (user.uid !== ADMIN_UID) {
+        await auth.signOut();
+        quizUploadForm.hidden = true;
+        lessonMigrationSection.hidden = true;
+        signOutButton.hidden = true;
+        showAuthMessage("This account is not authorized as an administrator.", true);
+        return false;
+      }
+
+      isAdmin = true;
+      quizUploadForm.hidden = false;
+      lessonMigrationSection.hidden = false;
+      signInButton.hidden = true;
+      signOutButton.hidden = false;
+      document.getElementById("adminEmail").disabled = true;
+      document.getElementById("adminPassword").disabled = true;
+      showAuthMessage(`Signed in as ${user.email || "administrator"}.`, false);
+      return true;
+    }
+
+    adminAuthForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      signInButton.disabled = true;
+      showAuthMessage("Signing in…", false);
+
+      try {
+        const email = document.getElementById("adminEmail").value.trim();
+        const password = document.getElementById("adminPassword").value;
+        const credential = await auth.signInWithEmailAndPassword(email, password);
+        await checkAdminAccess(credential.user);
+        document.getElementById("adminPassword").value = "";
+      } catch (error) {
+        console.error("Admin sign-in failed.", error);
+        showAuthMessage(`Sign-in failed: ${error.message}`, true);
+      } finally {
+        signInButton.disabled = false;
+      }
+    });
+
+    signOutButton.addEventListener("click", async () => {
+      try {
+        await auth.signOut();
+        isAdmin = false;
+        quizUploadForm.hidden = true;
+        lessonMigrationSection.hidden = true;
+        signInButton.hidden = false;
+        signOutButton.hidden = true;
+        document.getElementById("adminEmail").disabled = false;
+        document.getElementById("adminPassword").disabled = false;
+        showAuthMessage("Signed out.", false);
+      } catch (error) {
+        console.error("Admin sign-out failed.", error);
+        showAuthMessage(`Sign-out failed: ${error.message}`, true);
+      }
+    });
+
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        isAdmin = false;
+        quizUploadForm.hidden = true;
+        lessonMigrationSection.hidden = true;
+        signInButton.hidden = false;
+        signOutButton.hidden = true;
+        document.getElementById("adminEmail").disabled = false;
+        document.getElementById("adminPassword").disabled = false;
+        return;
+      }
+
+      try {
+        await checkAdminAccess(user);
+      } catch (error) {
+        console.error("Could not verify administrator access.", error);
+        isAdmin = false;
+        quizUploadForm.hidden = true;
+        lessonMigrationSection.hidden = true;
+        showAuthMessage(`Could not verify admin access: ${error.message}`, true);
+      }
+    });
+
+    importLessonsButton.addEventListener("click", async () => {
+      if (!isAdmin || auth.currentUser?.uid !== ADMIN_UID) {
+        lessonImportStatus.textContent = "Sign in with the configured administrator account first.";
+        lessonImportStatus.setAttribute("role", "alert");
+        return;
+      }
+
+      if (!Array.isArray(bundledLessons) || bundledLessons.length === 0) {
+        lessonImportStatus.textContent = "No bundled lesson data is available to import.";
+        lessonImportStatus.setAttribute("role", "alert");
+        return;
+      }
+
+      const lessonIds = new Set();
+      for (const lesson of bundledLessons) {
+        if (!Number.isInteger(lesson.id) || lessonIds.has(lesson.id) ||
+            !Number.isInteger(lesson.moduleId) ||
+            typeof lesson.title !== "string" ||
+            typeof lesson.description !== "string" ||
+            typeof lesson.content !== "string" ||
+            !Array.isArray(lesson.features)) {
+          lessonImportStatus.textContent = "The bundled lesson data contains a missing or duplicate ID or invalid fields.";
+          lessonImportStatus.setAttribute("role", "alert");
+          return;
+        }
+        lessonIds.add(lesson.id);
+      }
+
+      importLessonsButton.disabled = true;
+      lessonImportStatus.textContent = `Importing ${bundledLessons.length} lessons to Firestore…`;
+      lessonImportStatus.setAttribute("role", "status");
+
+      try {
+        const existingLessons = await firestore.collection("lessons").get();
+        if (!existingLessons.empty &&
+            !window.confirm(`Firestore already contains ${existingLessons.size} lessons. Replace them with the bundled versions?`)) {
+          lessonImportStatus.textContent = "Import cancelled. Firestore lessons were not changed.";
+          return;
+        }
+
+        const lessonCollection = firestore.collection("lessons");
+        const bundledIds = new Set(bundledLessons.map(lesson => String(lesson.id)));
+        const writes = [
+          ...existingLessons.docs
+            .filter(documentSnapshot => !bundledIds.has(documentSnapshot.id))
+            .map(documentSnapshot => ({ type: "delete", ref: documentSnapshot.ref })),
+          ...bundledLessons.map(lesson => ({
+            type: "set",
+            ref: lessonCollection.doc(String(lesson.id)),
+            lesson
+          }))
+        ];
+
+        for (let offset = 0; offset < writes.length; offset += 400) {
+          const batch = firestore.batch();
+          writes.slice(offset, offset + 400).forEach(write => {
+            if (write.type === "delete") {
+              batch.delete(write.ref);
+            } else {
+              batch.set(write.ref, write.lesson);
+            }
+          });
+          await batch.commit();
+        }
+
+        lessonImportStatus.textContent = `Imported ${bundledLessons.length} lessons into Firestore.`;
+      } catch (error) {
+        console.error("Could not import module lessons to Firestore.", error);
+        lessonImportStatus.textContent = `Lesson import failed: ${error.message}`;
+        lessonImportStatus.setAttribute("role", "alert");
+      } finally {
+        importLessonsButton.disabled = false;
+      }
+    });
+
+    quizUploadForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!isAdmin || !auth.currentUser) {
+        showUploadMessage("Sign in with an authorized admin account first.", true);
+        return;
+      }
+
+      if (!selectedQuizIsValid || !selectedQuiz) {
+        showUploadMessage("Choose a valid JSON quiz file before uploading.", true);
+        return;
+      }
+
+      const moduleId = moduleIdInput.value;
+      if (!["1", "2", "3", "4", "5", "6"].includes(moduleId)) {
+        showUploadMessage("Select a module quiz (ID 1–5) or Final Boss (ID 6).", true);
+        return;
+      }
+
+      const questions = selectedQuiz.map(question => question.publicQuestion);
+      const answerKeys = selectedQuiz.map(question => question.correct);
+      const moduleTitle = moduleIdInput.selectedOptions[0].textContent;
+      uploadButton.disabled = true;
+      showUploadMessage("Uploading quiz…", false);
+
+      try {
+        const quizRef = database.ref(`quizzes/modules/${moduleId}`);
+        const existingQuiz = await quizRef.once("value");
+        if (existingQuiz.exists() &&
+            !window.confirm(`${moduleTitle} already has an uploaded quiz. Replace it?`)) {
+          showUploadMessage("Upload cancelled. The existing module quiz was not changed.", false);
+          return;
+        }
+
+        const version = database.ref().push().key;
+        if (!version) {
+          throw new Error("Could not generate a quiz version ID.");
+        }
+
+        const updates = {};
+        updates[`quizAnswerKeys/${moduleId}/${version}`] = {
+          moduleId,
+          version,
+          answers: answerKeys,
+          uploadedBy: auth.currentUser.uid,
+          uploadedAt: firebase.database.ServerValue.TIMESTAMP
+        };
+        updates[`quizzes/modules/${moduleId}`] = {
+          moduleId,
+          version,
+          questions,
+          uploadedBy: auth.currentUser.uid,
+          uploadedAt: firebase.database.ServerValue.TIMESTAMP
+        };
+        await database.ref().update(updates);
+
+        showUploadMessage(`${moduleTitle} quiz uploaded successfully. The student app will identify it using quiz ID ${moduleId}.`, false);
+        quizUploadForm.reset();
+        selectedQuiz = null;
+        selectedQuizIsValid = false;
+        fileStatus.textContent = "";
+      } catch (error) {
+        console.error("Quiz upload failed.", error);
+        showUploadMessage(`Upload failed: ${error.message}`, true);
+      } finally {
+        uploadButton.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "quizzes": {
+      "modules": {
+        "$moduleId": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid === 'CiAfx7qxaxciuavJBav2dLBHdLU2'",
+          ".validate": "newData.hasChildren(['moduleId', 'version', 'questions', 'uploadedBy', 'uploadedAt']) && newData.child('moduleId').val() === $moduleId && newData.child('version').isString() && newData.child('questions').hasChildren() && newData.child('uploadedBy').val() === auth.uid && newData.child('uploadedAt').isNumber()"
+        }
+      }
+    },
+    "quizAnswerKeys": {
+      "$moduleId": {
+        "$version": {
+          ".read": "auth != null",
+          ".write": "auth != null && auth.uid === 'CiAfx7qxaxciuavJBav2dLBHdLU2'",
+          ".validate": "newData.hasChildren(['moduleId', 'version', 'answers', 'uploadedBy', 'uploadedAt']) && newData.child('moduleId').val() === $moduleId && newData.child('version').val() === $version && newData.child('answers').hasChildren() && newData.child('uploadedBy').val() === auth.uid && newData.child('uploadedAt').isNumber()"
+        }
+      }
+    },
+    "quizAttempts": {
+      "$uid": {
+        "$moduleId": {
+          "$version": {
+            ".read": "auth != null && auth.uid === $uid",
+            ".write": "auth != null && auth.uid === $uid && !data.exists() && root.child('quizAnswerKeys').child($moduleId).child($version).exists()",
+            ".validate": "newData.hasChildren(['uid', 'moduleId', 'version', 'answers', 'submittedAt']) && newData.child('uid').val() === $uid && newData.child('moduleId').val() === $moduleId && newData.child('version').val() === $version && newData.child('answers').hasChildren() && newData.child('submittedAt').isNumber()",
+            "answers": {
+              "$questionIndex": {
+                ".validate": "newData.isNumber()"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

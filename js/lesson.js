@@ -45,13 +45,18 @@ function updateLessonQuizAction() {
         return;
     }
 
+    if (isFinalBossCompleted()) {
+        title.textContent = "All quizzes completed";
+        message.textContent = "You have completed every quiz. Retaking quizzes is disabled.";
+        button.textContent = "Quiz completed";
+        button.disabled = true;
+        scoreboard?.classList.add("hidden");
+        return;
+    }
+
     title.textContent = "Final Boss quiz";
-    message.textContent = state.quizBestScores[6]
-        ? `Your best Final Boss score is ${state.quizBestScores[6]}%.`
-        : "All module quizzes are complete. Take the Final Boss quiz!";
-    button.textContent = state.quizBestScores[6]
-        ? "Retake Final Boss →"
-        : "Take Final Boss →";
+    message.textContent = "All module quizzes are complete. Take the Final Boss quiz!";
+    button.textContent = "Take Final Boss →";
     button.onclick = () => startQuiz(false);
 }
 
@@ -81,9 +86,9 @@ function renderLearningPath() {
 }
 
 
-const completedLessons = new Set(
-  JSON.parse(localStorage.getItem("completedLessons") || "[]")
-);
+const completedLessons = {
+  has: lessonId => state.completedLessons.includes(lessonId)
+};
 
 function getModuleProgress(moduleId) {
   const moduleLessons = lessons.filter(

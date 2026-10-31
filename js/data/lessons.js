@@ -1,4 +1,4 @@
-const lessons = [
+const bundledLessons = [
   // MODULE 1: CYBERSECURITY BASICS
   {
     id: 1,

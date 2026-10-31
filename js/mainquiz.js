@@ -6,12 +6,25 @@ let quizTimerId;
 let quizTimeRemaining = 15;
 const quizQuestionTime = 15;
 const quizAdvanceDelay = 5;
+let uploadedQuizMode = false;
+let uploadedQuizVersion = null;
+let uploadedQuizUid = null;
+let uploadedQuizAnswers = [];
+let isSubmittingUploadedQuiz = false;
 
-function startQuiz(number) {
+async function startQuiz(number) {
   const requestedModule = number || 6;
   if (state.quizProgress?.module === requestedModule) {
     quizLaunchPage = document.querySelector(".page.active")?.id || state.quizProgress.launchPage || "interactive";
     restoreQuizProgress(state.quizProgress);
+    return;
+  }
+
+  const quizAlreadyCompleted = requestedModule === 6
+    ? isFinalBossCompleted()
+    : state.completedModuleQuizzes.includes(requestedModule);
+  if (quizAlreadyCompleted) {
+    toast(`${requestedModule === 6 ? "Final Boss" : `Module ${requestedModule}`} quiz is already completed. Retakes are disabled.`);
     return;
   }
 
@@ -37,12 +50,23 @@ function startQuiz(number) {
             toast(`You need to complete all lessons in module ${number} before taking the quiz.`);
             return;
         } else {
-          quizLaunchPage = document.querySelector(".page.active")?.id || "interactive";
-          document.getElementById("quizScoreboard").classList.add("hidden");
+            try {
+                const uploadedQuiz = await loadUploadedModuleQuestions(number);
+                if (uploadedQuiz?.alreadySubmitted) {
+                    toast(`You have already submitted the Module ${number} quiz. Each quiz version allows one attempt.`);
+                    return;
+                }
+                prepareQuizQuestions(number, uploadedQuiz);
+            } catch (error) {
+                console.error(`Could not load the uploaded quiz for module ${number}.`, error);
+                toast(`Could not load Module ${number} quiz. Check your connection and Realtime Database rules.`);
+                return;
+            }
+            quizLaunchPage = document.querySelector(".page.active")?.id || "interactive";
+            document.getElementById("quizScoreboard").classList.add("hidden");
             document.getElementById("overlay").classList.add("active");
             document.getElementById("quizCard").style.display = "block";
             document.getElementById("quizCard").classList.remove("hidden");
-            prepareQuizQuestions(number);
             renderQuiz(number);
         }
     } else {
@@ -50,13 +74,25 @@ function startQuiz(number) {
           state.completedModuleQuizzes.includes(index + 1)
         );
         if (allModuleQuizzesCompleted && state.completedLessons.length >= lessons.length) {
+          let uploadedQuiz;
+          try {
+              uploadedQuiz = await loadUploadedModuleQuestions(6);
+          } catch (error) {
+              console.error("Could not load the uploaded Final Boss quiz.", error);
+              toast("Could not load the Final Boss quiz. Check your connection and Realtime Database rules.");
+              return;
+          }
+          if (uploadedQuiz?.alreadySubmitted) {
+              toast("You have already submitted the Final Boss quiz. Each quiz version allows one attempt.");
+              return;
+          }
           quizLaunchPage = document.querySelector(".page.active")?.id || "interactive";
           document.getElementById("quizScoreboard").classList.add("hidden");
-            document.getElementById("overlay").classList.add("active");
-            document.getElementById("quizCard").style.display = "block";
-            document.getElementById("quizCard").classList.remove("hidden");
-            prepareQuizQuestions(6);
-            renderQuiz(6);
+          document.getElementById("overlay").classList.add("active");
+          document.getElementById("quizCard").style.display = "block";
+          document.getElementById("quizCard").classList.remove("hidden");
+          prepareQuizQuestions(6, uploadedQuiz);
+          renderQuiz(6);
         } else {
             toast("You need to complete all lessons before taking the quiz.");
             return;
@@ -75,11 +111,76 @@ function shuffleQuizItems(items) {
     return shuffled;
 }
 
-function prepareQuizQuestions(number) {
-    const sourceQuestions = number >= 1 && number <= 5
-        ? [module1, module2, module3, module4, module5][number - 1]
-        : quizQuestionsFull;
-    quizQuestions = shuffleQuizItems(sourceQuestions.map(question => {
+async function loadUploadedModuleQuestions(moduleId) {
+    const snapshot = await firebase.database().ref(`quizzes/modules/${moduleId}`).once("value");
+    if (!snapshot.exists()) {
+        if (moduleId === 6) return null;
+        throw new Error(`No quiz has been uploaded for module ${moduleId}.`);
+    }
+
+    const uploadedQuiz = snapshot.val();
+    if (String(uploadedQuiz.moduleId) !== String(moduleId) ||
+        typeof uploadedQuiz.version !== "string" ||
+        !Array.isArray(uploadedQuiz.questions) ||
+        uploadedQuiz.questions.length === 0) {
+        throw new Error(`Uploaded quiz data for module ${moduleId} is invalid.`);
+    }
+
+    const user = auth.currentUser;
+    if (!user) {
+        throw new Error("Sign in to take this quiz.");
+    }
+
+    const attempt = await firebase.database()
+        .ref(`quizAttempts/${user.uid}/${moduleId}/${uploadedQuiz.version}`)
+        .once("value");
+    if (attempt.exists()) {
+        return { alreadySubmitted: true };
+    }
+
+    const answerSnapshot = await firebase.database()
+        .ref(`quizAnswerKeys/${moduleId}/${uploadedQuiz.version}/answers`)
+        .once("value");
+    const answerKeys = answerSnapshot.val();
+    if (!Array.isArray(answerKeys) || answerKeys.length !== uploadedQuiz.questions.length) {
+        throw new Error(`Answer key for module ${moduleId} is missing or invalid.`);
+    }
+
+    uploadedQuiz.questions = uploadedQuiz.questions.map((question, index) => {
+        if (!question || typeof question.q !== "string" || !question.q.trim() ||
+            !Array.isArray(question.answers) || question.answers.length < 2 ||
+            question.answers.some(answer => typeof answer !== "string" || !answer.trim()) ||
+            !Number.isInteger(answerKeys[index]) ||
+            answerKeys[index] < 0 ||
+            answerKeys[index] >= question.answers.length) {
+            throw new Error(`Uploaded quiz question ${index + 1} is invalid.`);
+        }
+
+        return {
+            q: question.q,
+            scenario: typeof question.scenario === "string" ? question.scenario : "",
+            answers: question.answers,
+            correct: answerKeys[index],
+            why: typeof question.why === "string" ? question.why : ""
+        };
+    });
+
+    return uploadedQuiz;
+}
+
+function prepareQuizQuestions(number, uploadedQuiz = null) {
+    if (number >= 1 && number <= 5 && !uploadedQuiz) {
+        throw new Error(`Module ${number} quizzes must be loaded from Realtime Database.`);
+    }
+
+    uploadedQuizMode = Boolean(uploadedQuiz && !uploadedQuiz.alreadySubmitted);
+    uploadedQuizVersion = uploadedQuizMode ? uploadedQuiz.version : null;
+    uploadedQuizUid = uploadedQuizMode ? auth.currentUser?.uid || null : null;
+    uploadedQuizAnswers = uploadedQuizMode ? Array(uploadedQuiz.questions.length).fill(-1) : [];
+    const sourceQuestions = uploadedQuizMode ? uploadedQuiz.questions : quizQuestionsFull;
+    quizQuestions = uploadedQuizMode
+        ? sourceQuestions.map(question => ({ ...question }))
+        : shuffleQuizItems(sourceQuestions.map(question => {
         const answers = shuffleQuizItems(question.answers.map((answer, index) => ({
             answer,
             isCorrect: index === question.correct
@@ -104,9 +205,15 @@ function persistQuizProgress(phase, deadline, selectedAnswer = null) {
         phase,
         deadline,
         selectedAnswer,
-        launchPage: quizLaunchPage
+        launchPage: quizLaunchPage,
+        ...(uploadedQuizMode ? {
+            uploadedQuiz: true,
+            uploadedVersion: uploadedQuizVersion,
+            uploadedUid: uploadedQuizUid,
+            answers: uploadedQuizAnswers
+        } : {})
     };
-    localStorage.setItem("cybersafeState", JSON.stringify(state));
+    scheduleUserDataSave();
     updateHeroContinueLearning();
     updateLessonQuizAction();
 }
@@ -149,6 +256,7 @@ function startQuizQuestionTimer(deadline = Date.now() + quizQuestionTime * 1000)
 function showQuizAnswer(index) {
     const q = quizQuestions[currentQuiz];
     const buttons = document.querySelectorAll(".answer");
+
     buttons[q.correct].classList.add("correct");
     if (index === q.correct) {
         buttons[index].classList.add("correct");
@@ -192,57 +300,129 @@ function answerQuiz(index) {
     if (quizAnswered) return;
     quizAnswered = true;
     clearInterval(quizTimerId);
-    if (index === quizQuestions[currentQuiz].correct) quizScore++;
+    if (uploadedQuizMode) {
+        uploadedQuizAnswers[currentQuiz] = Number.isInteger(index) ? index : -1;
+    }
+    if (index === quizQuestions[currentQuiz].correct) {
+        quizScore++;
+    }
     showQuizAnswer(index);
     startQuizTimer("cooldown", Date.now() + quizAdvanceDelay * 1000, index);
 }
 
-function nextQuestion() {
+async function nextQuestion() {
     clearQuizTimers();
     if (currentQuiz < quizQuestions.length - 1) {
         currentQuiz++;
         renderQuiz();
     } else {
-        const percent = Math.round((quizScore / quizQuestions.length) * 100);
-      const correctAnswers = quizScore;
-      const questionCount = quizQuestions.length;
-      const completedModule = currquizmodule;
-        if (currquizmodule >= 1 && currquizmodule <= modulesNames.length + 1 &&
-          !state.completedModuleQuizzes.includes(currquizmodule)) {
-          state.completedModuleQuizzes.push(currquizmodule);
-        }
-        state.quizBestScores[currquizmodule] = Math.max(
-          state.quizBestScores[currquizmodule] || 0,
-          percent
-        );
-        state.quizBestScore = Math.max(state.quizBestScore, percent);
-        state.points += percent;
-        addActivity(`Completed quiz: ${percent}% (${quizScore}/${quizQuestions.length})`);
-        state.quizProgress = null;
-        saveState();
-        toast(`Quiz complete: ${percent}%`);
-        currentQuiz = 0;
-        quizScore = 0;
-        
-        document.getElementById('overlay').classList.remove('active');
-        document.getElementById('quizCard').style.animation = 'lesson-detail-animationOut 0.3s ease forwards';
-        setTimeout(() => {
-            document.getElementById('quizCard').classList.add('hidden');
-            document.getElementById('quizCard').style.animation = '';
-          if (quizLaunchPage === "lessons") {
-            if (completedModule === 5) {
-              toast("Module 5 complete! Starting the Final Boss quiz.");
-              startQuiz(false);
-            } else if (document.getElementById("lessonQuizAction").classList.contains("hidden")) {
-              document.getElementById("quizScoreboard").classList.add("hidden");
-            } else {
-              showQuizScoreboard(completedModule, percent, correctAnswers, questionCount);
+        if (uploadedQuizMode) {
+            if (isSubmittingUploadedQuiz) return;
+            isSubmittingUploadedQuiz = true;
+            try {
+                await submitUploadedQuiz();
+                completeQuiz(quizScore, quizQuestions.length);
+            } catch (error) {
+                console.error("Could not submit the uploaded quiz.", error);
+                const feedback = document.getElementById("quizFeedback");
+                feedback.replaceChildren();
+                const message = document.createElement("p");
+                message.textContent = "Your attempt could not be submitted. Your answers are still on this device; retry to submit once.";
+                const retryButton = document.createElement("button");
+                retryButton.className = "primary-btn";
+                retryButton.textContent = "Retry submission";
+                retryButton.addEventListener("click", () => nextQuestion());
+                feedback.append(message, retryButton);
+            } finally {
+                isSubmittingUploadedQuiz = false;
             }
-          } else {
-            navigate("results");
-          }
-        }, 300);
+            return;
+        }
+
+        completeQuiz(quizScore, quizQuestions.length, true);
     }
+}
+
+async function submitUploadedQuiz() {
+    const user = auth.currentUser;
+    if (!user || !uploadedQuizVersion || !uploadedQuizMode || user.uid !== uploadedQuizUid) {
+        throw new Error("Sign in again before submitting this quiz.");
+    }
+
+    const attemptRef = firebase.database()
+        .ref(`quizAttempts/${user.uid}/${currquizmodule}/${uploadedQuizVersion}`);
+    const attempt = {
+        uid: user.uid,
+        moduleId: String(currquizmodule),
+        version: uploadedQuizVersion,
+        answers: uploadedQuizAnswers,
+        submittedAt: firebase.database.ServerValue.TIMESTAMP
+    };
+    const result = await attemptRef.transaction(existingAttempt =>
+        existingAttempt === null ? attempt : undefined
+    );
+    if (!result.committed) {
+        const savedAttempt = await attemptRef.once("value");
+        const saved = savedAttempt.val();
+        const isSameSubmission = saved &&
+            saved.uid === attempt.uid &&
+            saved.moduleId === attempt.moduleId &&
+            saved.version === attempt.version &&
+            JSON.stringify(saved.answers) === JSON.stringify(attempt.answers);
+        if (!isSameSubmission) {
+            throw new Error("An attempt for this quiz version has already been submitted.");
+        }
+    }
+}
+
+function resetUploadedQuizState() {
+    currentQuiz = 0;
+    quizScore = 0;
+    uploadedQuizMode = false;
+    uploadedQuizVersion = null;
+    uploadedQuizUid = null;
+    uploadedQuizAnswers = [];
+}
+
+function completeQuiz(correctAnswers, questionCount) {
+    const percent = Math.round((correctAnswers / questionCount) * 100);
+    const completedModule = currquizmodule;
+    if (currquizmodule >= 1 && currquizmodule <= modulesNames.length + 1 &&
+        !state.completedModuleQuizzes.includes(currquizmodule)) {
+        state.completedModuleQuizzes.push(currquizmodule);
+    }
+    state.quizBestScores[currquizmodule] = Math.max(
+        state.quizBestScores[currquizmodule] || 0,
+        percent
+    );
+    state.quizBestScore = Math.max(state.quizBestScore, percent);
+    state.points += percent;
+    addActivity(`${uploadedQuizMode ? "Submitted" : "Completed"} quiz: ${percent}% (${correctAnswers}/${questionCount})`);
+    state.quizProgress = null;
+    saveState();
+    toast(`Quiz complete: ${percent}%`);
+    currentQuiz = 0;
+    quizScore = 0;
+    resetUploadedQuizState();
+
+    document.getElementById('overlay').classList.remove('active');
+    document.getElementById('quizCard').style.animation = 'lesson-detail-animationOut 0.3s ease forwards';
+    setTimeout(() => {
+        document.getElementById('quizCard').classList.add('hidden');
+        document.getElementById('quizCard').style.animation = '';
+        if (quizLaunchPage === "lessons") {
+            if (completedModule === 5) {
+                toast("Module 5 complete! Starting the Final Boss quiz.");
+                startQuiz(false);
+            } else if (document.getElementById("lessonQuizAction").classList.contains("hidden")) {
+                document.getElementById("quizScoreboard").classList.add("hidden");
+            } else {
+                showQuizScoreboard(completedModule, percent, correctAnswers, questionCount);
+            }
+        } else {
+            navigate("results");
+        }
+    }, 300);
 }
 
 function showQuizScoreboard(moduleId, percent, correctAnswers, questionCount) {
@@ -272,7 +452,7 @@ function closeQuiz() {
     if (state.quizProgress) {
         state.quizProgress.deadline = Date.now() + Math.max(1, quizTimeRemaining) * 1000;
     }
-    localStorage.setItem("cybersafeState", JSON.stringify(state));
+    scheduleUserDataSave();
     
     document.getElementById('overlay').classList.remove('active');
     document.getElementById('quizCard').style.animation = 'lesson-detail-animationOut 0.3s ease forwards';
@@ -293,6 +473,11 @@ function restoreQuizProgress(progress) {
         && progress.currentQuestion < progress.questions.length
         && Number.isFinite(progress.deadline)
         && ["question", "cooldown"].includes(progress.phase)
+        && (progress.uploadedQuiz !== true ||
+            (typeof progress.uploadedVersion === "string" &&
+                typeof progress.uploadedUid === "string" &&
+                Array.isArray(progress.answers) &&
+                progress.answers.length === progress.questions.length))
         && (progress.phase !== "cooldown"
             || progress.selectedAnswer === null
             || (Number.isInteger(progress.selectedAnswer)
@@ -301,7 +486,7 @@ function restoreQuizProgress(progress) {
                 && progress.selectedAnswer < progress.questions[progress.currentQuestion].answers.length));
     if (!isValid) {
         state.quizProgress = null;
-        localStorage.setItem("cybersafeState", JSON.stringify(state));
+        scheduleUserDataSave();
         return;
     }
 
@@ -309,6 +494,10 @@ function restoreQuizProgress(progress) {
     quizScore = Number(progress.score) || 0;
     currquizmodule = progress.module;
     quizQuestions = progress.questions;
+    uploadedQuizMode = progress.uploadedQuiz === true;
+    uploadedQuizVersion = uploadedQuizMode ? progress.uploadedVersion : null;
+    uploadedQuizUid = uploadedQuizMode ? progress.uploadedUid : null;
+    uploadedQuizAnswers = uploadedQuizMode ? [...progress.answers] : [];
     quizLaunchPage = document.getElementById(progress.launchPage)?.classList.contains("page")
         ? progress.launchPage
         : "interactive";

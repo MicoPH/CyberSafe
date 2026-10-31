@@ -1,96 +1,5 @@
 const sample5 = [
     {
-    question: "Does HTTPS guarantee that a website is legitimate?",
-    scenario: "Your browser displays a padlock icon beside the website address.",
-    answers: [
-      "Yes, every HTTPS website is safe.",
-      "Yes, it guarantees that the seller is honest.",
-      "No, HTTPS encrypts the connection but does not prove the website is trustworthy.",
-      "No, HTTPS means the website is offline."
-    ],
-    ans: 2,
-    why: "HTTPS protects data in transit, but fraudulent websites can also use HTTPS.",
-    subject: "Module 2"
-  },
-  {
-    question: "An unfamiliar account says you won a prize but must pay a fee first. What should you do?",
-    scenario: "You did not enter any contest.",
-    answers: [
-      "Pay immediately.",
-      "Send your identification documents.",
-      "Treat the offer as suspicious and verify it independently.",
-      "Invite your friends to pay too."
-    ],
-    ans: 2,
-    why: "Unexpected prizes that require upfront payments are a common scam pattern.",
-    subject: "Module 2"
-  },
-  {
-    question: "A seller offers a popular phone at an unusually low price and demands a direct bank transfer. What is safest?",
-    scenario: "The seller refuses to use the shopping platform's payment system.",
-    answers: [
-      "Transfer the money immediately.",
-      "Use a protected payment method on a trusted platform or walk away.",
-      "Share your one-time banking code.",
-      "Ignore the platform's warnings."
-    ],
-    ans: 1,
-    why: "Unrealistic prices and irreversible payment demands can indicate fraud.",
-    subject: "Module 2"
-  },
-  {
-    question: "What is the purpose of a fake login page?",
-    scenario: "A link opens a page that resembles your email provider.",
-    answers: [
-      "To improve your internet speed.",
-      "To install official software updates.",
-      "To back up your account.",
-      "To capture login information entered by visitors."
-    ],
-    ans: 3,
-    why: "Fake login pages can collect usernames, passwords, and other sensitive details.",
-    subject: "Module 2"
-  },
-  {
-    question: "A caller claims to be from your bank and requests your one-time password. What should you do?",
-    scenario: "The caller says the code is needed to prevent fraud.",
-    answers: [
-      "Read the code aloud.",
-      "Send the code by text.",
-      "Keep the code private and contact your bank through an official channel.",
-      "Share your card PIN too."
-    ],
-    ans: 2,
-    why: "One-time codes can authorize account access or transactions and should not be shared.",
-    subject: "Module 2"
-  },
-  {
-    question: "Which is the safest way to open your online banking account?",
-    scenario: "You receive an unexpected text message containing a banking link.",
-    answers: [
-      "Click the link immediately.",
-      "Open your official banking app or type the known website address yourself.",
-      "Use a shortened link from a stranger.",
-      "Ask the sender for your password."
-    ],
-    ans: 1,
-    why: "Independent navigation helps you avoid deceptive links.",
-    subject: "Module 2"
-  },
-  {
-    question: "A QR code on an unfamiliar poster promises free mobile data. What should you do?",
-    scenario: "The poster does not identify the organization providing the offer.",
-    answers: [
-      "Scan it and enter your password.",
-      "Install every application it offers.",
-      "Share your recovery codes.",
-      "Verify the source and destination before using the QR code."
-    ],
-    ans: 3,
-    why: "QR codes can conceal links to malicious or deceptive websites.",
-    subject: "Module 2"
-  },
-  {
     question: "A supposed technical-support agent contacts you without being asked and requests remote access. What should you do?",
     scenario: "You did not contact technical support.",
     answers: [
@@ -190,8 +99,35 @@ const sample5 = [
       "Change the password through the real service and secure your account.",
       "Reuse the same password on other accounts."
     ],
+    ans: 2,
+    why: "Change exposed credentials through the legitimate service and update other accounts if the password was reused.",
     subject: "Module 2"
-}
-    
+  },
+  {
+    question: "A message claims your delivery is delayed and asks you to install an unfamiliar tracking app. What should you do?",
+    scenario: "You are unsure whether the message is from the real courier.",
+    answers: [
+      "Install the app immediately.",
+      "Check the delivery through the courier's official website or app.",
+      "Provide your account password.",
+      "Forward the link to your contacts."
+    ],
+    ans: 1,
+    why: "Independent verification helps distinguish legitimate delivery updates from malicious messages.",
+    subject: "Module 2"
+  },
+  {
+    question: "What should you do with a suspicious message asking you to keep a financial request secret?",
+    scenario: "The sender claims to be a relative who urgently needs money.",
+    answers: [
+      "Transfer money without checking.",
+      "Send your banking credentials.",
+      "Follow only the message's instructions.",
+      "Verify the person's identity through a separate, trusted communication channel."
+    ],
+    ans: 3,
+    why: "Scammers exploit urgency and secrecy. Independently verify unexpected financial requests.",
+    subject: "Module 2"
+  }
 ]
 quiz.push(...sample5)

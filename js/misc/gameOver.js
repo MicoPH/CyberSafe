@@ -34,9 +34,9 @@ async function checkGameOver() {
     }
     await wait(100);
     const finalScore = Math.max(0, Number(score2) || 0);
-    const highScore = Math.max(Number(localStorage.getItem('blastScore')) || 0, finalScore);
-    localStorage.setItem('blastScore', highScore);
-    localStorage.removeItem(blastProgressKey);
+    const highScore = Math.max(Number(blastScore) || 0, finalScore);
+    blastScore = highScore;
+    blastProgress = null;
     const xpEarned = Math.floor(finalScore / 1000);
     state.points = (Number(state.points) || 0) + xpEarned;
     addActivity(`Earned ${xpEarned} XP from Hype Blast (${finalScore} points).`);

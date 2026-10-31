@@ -1,11 +1,11 @@
 const tileBase64 = {
-    red:'img/BLASTACTS/red.png',
-    orange:'img/BLASTACTS/orange.png',
-    yellow:'img/BLASTACTS/yellow.png',
-    green:'img/BLASTACTS/green.png',
-    lightBlue:'img/BLASTACTS/lightBlue.png',
-    blue:'img/BLASTACTS/blue.png',
-    gray: 'img/BLASTACTS/gray.png',
+    red:'img/BLASTGENEROUS/red.png',
+    orange:'img/BLASTGENEROUS/orange.png',
+    yellow:'img/BLASTGENEROUS/yellow.png',
+    green:'img/BLASTGENEROUS/green.png',
+    lightBlue:'img/BLASTGENEROUS/lightBlue.png',
+    blue:'img/BLASTGENEROUS/blue.png',
+    gray: 'img/BLASTGENEROUS/gray.png',
 };
 const tileImages = {
     red: new Image(),

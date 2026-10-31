@@ -10,9 +10,6 @@ const gridSize =  8;
 let blockSize = canvas.width / gridSize;
 let linesclearedscore = 0;
 let blaster = false;
-const blastProgressKey = 'hypeBlastProgress';
-
-
 function resizeCanvas() {
     vertmode = window.innerWidth < 600 ? true : false;
     if(vertmode){
@@ -38,7 +35,8 @@ function resetGrid() {
 
 function saveBlastProgress() {
     if (typeof gameOverXpAwarded !== 'undefined' && gameOverXpAwarded) {
-        localStorage.removeItem(blastProgressKey);
+        blastProgress = null;
+        scheduleUserDataSave();
         return;
     }
     if (typeof grid === 'undefined' || !pieceSelection) return;
@@ -52,41 +50,35 @@ function saveBlastProgress() {
         questionsProgress: Number(questachieve) || 0,
         pieces: Array.from(pieceSelection, (canvas, index) => ({
             piece: canvas.piece || null,
-            color: pieceColors[index] || null
+            color: canvas.piece ? pieceColors[index] || null : null
         })),
         questionPending: Boolean(quizActive),
         questionIndex: quizActive ? currentQuestionIndex : -1
     };
-    localStorage.setItem(blastProgressKey, JSON.stringify(progress));
+    blastProgress = progress;
+    scheduleUserDataSave();
 }
 
 function restoreBlastProgress() {
-    let progress;
-    try {
-        progress = JSON.parse(localStorage.getItem(blastProgressKey) || 'null');
-    } catch (error) {
-        console.error('Could not read saved HYPE BLAST progress.', error);
-        localStorage.removeItem(blastProgressKey);
-        return null;
-    }
+    const progress = blastProgress;
     if (!progress || !Array.isArray(progress.grid) || progress.grid.length !== gridSize ||
         !Array.isArray(progress.pieces) || progress.pieces.length !== pieceSelection.length) {
-        return null;
+        return false;
     }
 
     const validColors = new Set([...colors, 'gray']);
     if (progress.grid.some((row) => !Array.isArray(row) || row.length !== gridSize ||
         row.some((color) => !validColors.has(color)))) {
-        return null;
+        return false;
     }
     if (progress.pieces.some((item) => !item ||
         (item.piece === null
-            ? item.color !== null
+            ? item.color !== null && !colors.includes(item.color)
             : (!Array.isArray(item.piece) || item.piece.length === 0 ||
                 item.piece.some((row) => !Array.isArray(row) || row.length === 0 ||
                     row.some((cell) => cell !== 0 && cell !== 1)) ||
                 !colors.includes(item.color))))) {
-        return null;
+        return false;
     }
 
     grid = progress.grid.map((row) => [...row]);
@@ -103,9 +95,15 @@ function restoreBlastProgress() {
 }
 
 document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') saveBlastProgress();
+    if (document.visibilityState === 'hidden') {
+        saveBlastProgress();
+        flushUserDataSave();
+    }
 });
-window.addEventListener('pagehide', saveBlastProgress);
+window.addEventListener('pagehide', () => {
+    saveBlastProgress();
+    flushUserDataSave();
+});
 
     // make sure quiz UI is hidden initially
 const questBox = document.querySelector('.quest');
@@ -131,6 +129,7 @@ function gameBlasterClose(){
         document.getElementById('blastCon').style.display = 'none';
     }, 300);
     document.getElementById("game-over").classList.add("hide");
+    document.querySelector(".overlay").classList.add('hide')
 }
 function gameStart(){
     if (!isFinalBossCompleted()) {
@@ -141,11 +140,7 @@ function gameStart(){
     document.querySelector(".game-content").style.display = "block"
     document.getElementById("overlay").classList.add("blast")
     loadImages().then(() => {
-        if (!localStorage.getItem('blastScore')) {
-            document.getElementById('highScore').textContent = "High Score: 0";
-        } else {
-            document.getElementById('highScore').textContent = "High Score: " + localStorage.getItem('blastScore');
-        }
+        document.getElementById('highScore').textContent = "High Score: " + blastScore;
         console.log('All images loaded');
         explosionCanvas.width = window.innerWidth;
         explosionCanvas.height = window.innerHeight;
@@ -178,3 +173,4 @@ function gameStart(){
         console.error(error); // Log any errors if an image fails to load
     });
 }
+document.getElementById("heroHypeBlastButton").innerHTML = restoreBlastProgress ? "Resume HYPE BLAST" : "Play HYPE BLAST"

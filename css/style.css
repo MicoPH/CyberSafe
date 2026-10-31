@@ -17,6 +17,70 @@ body {
     overscroll-behavior: none; 
     overflow: hidden;
 }
+.auth-screen {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    padding: 20px;
+    background: var(--bg);
+}
+body.authenticated .auth-screen {
+    display: none;
+}
+.auth-card {
+    display: grid;
+    gap: 12px;
+    width: min(100%, 420px);
+    padding: 36px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+#signInFields,
+#profileSetup {
+    display: grid;
+    gap: 12px;
+}
+#signInFields[hidden],
+#profileSetup[hidden] {
+    display: none;
+}
+.auth-logo {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 8px;
+    object-fit: contain;
+}
+.auth-card h1,
+.auth-card p {
+    margin: 0;
+}
+.auth-card label {
+    font-weight: 650;
+}
+.auth-card input,
+.auth-card select {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--surface);
+    color: var(--text);
+}
+.auth-card .auth-error {
+    min-height: 1.25em;
+    color: var(--danger);
+    font-size: 13px;
+}
+.auth-card .text-btn {
+    justify-self: center;
+}
+body:not(.authenticated) .app-shell {
+    visibility: hidden;
+}
 button, input, select { 
     font: inherit; 
 }
@@ -325,6 +389,11 @@ button {
 .danger-btn { 
     background: #ffecec; 
     color: var(--danger); 
+}
+.dark .danger-btn{
+    background: #130707; 
+    color: rgb(245, 172, 172); 
+
 }
 .full { 
     width: 100%; 
@@ -931,6 +1000,34 @@ select {
     color: var(--text); 
     padding: 10px; 
     border-radius: 9px; 
+}
+
+body[data-graphics-quality="low"] {
+    --shadow: none;
+}
+body[data-graphics-quality="low"] .sidebar,
+body[data-graphics-quality="low"] .topbar {
+    backdrop-filter: none;
+}
+body[data-graphics-quality="low"] .hero video {
+    display: none;
+}
+body[data-graphics-quality="low"] .hero div * {
+    opacity: 1;
+}
+body[data-graphics-quality="low"] *,
+body[data-graphics-quality="low"] *::before,
+body[data-graphics-quality="low"] *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+}
+body[data-graphics-quality="high"] {
+    --shadow: 0 16px 40px rgba(25, 44, 75, .16);
+}
+body[data-graphics-quality="high"] .sidebar,
+body[data-graphics-quality="high"] .topbar {
+    backdrop-filter: blur(18px);
 }
 
 .toast {

@@ -1,5 +1,44 @@
- const sample3 = [
-    {
+ const sample3 = [  
+  {
+    question: "Someone offers paid account recovery and asks for your password. What should you do?",
+    scenario: "The person contacted you privately and is not official support.",
+    answers: [
+      "Use the platform's official recovery process and do not share credentials.",
+      "Pay and give them your password.",
+      "Send your recovery codes.",
+      "Give them remote access."
+    ],
+    ans: 0,
+    why: "Recovery scammers exploit people who are already having account-access problems.",
+    subject: "Module 5"
+  },
+  {
+    question: "A classmate sends an unexpected attachment that seems unusual. What is safest?",
+    scenario: "The message does not sound like how your classmate normally writes.",
+    answers: [
+      "Open it immediately because you know the sender.",
+      "Verify with the classmate through another channel before opening it.",
+      "Forward it to everyone.",
+      "Disable antivirus protection."
+    ],
+    ans: 1,
+    why: "A known account may be compromised, so unusual attachments should be verified.",
+    subject: "Module 5"
+  },
+  {
+    question: "A service reports a breach, and you reused that password elsewhere. What should you do?",
+    scenario: "The same password protects several accounts.",
+    answers: [
+      "Keep using it.",
+      "Change only your profile picture.",
+      "Change it on affected and reused accounts, using unique passwords.",
+      "Post the password publicly as a warning."
+    ],
+    ans: 2,
+    why: "Changing reused passwords limits the risk of attackers accessing other accounts.",
+    subject: "Module 5"
+  },
+  {
     question: "A delivery text asks you to pay through an unfamiliar link. What should you do?",
     scenario: "You are unsure whether the message is legitimate.",
     answers: [

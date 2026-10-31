@@ -7,10 +7,46 @@
   <title>CyberSafe | Cybersecurity Learning Module</title>
   <link rel="stylesheet" href="css/colors.css">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/BLASTACTS.css">
+  <link rel="stylesheet" href="css/BLASTGENEROUS.css">
   <link rel="shortcut icon" id="favicon" href="favicon.ico">
 </head>
 <body>
+  <section class="auth-screen" id="authScreen" aria-labelledby="authTitle">
+    <form class="auth-card" id="authForm">
+      <img src="img/icons/cybersecurity_icon.png" alt="" class="auth-logo">
+      <span class="eyebrow">CYBERSAFE</span>
+      <h1 id="authTitle">Welcome back</h1>
+      <p id="authMessage">Sign in with your email and password to continue.</p>
+      <div id="signInFields">
+        <label for="authEmail">Email address</label>
+        <input id="authEmail" name="email" type="email" autocomplete="email" required>
+        <label for="authPassword">Password</label>
+        <input id="authPassword" name="password" type="password" autocomplete="current-password" required>
+      </div>
+      <p class="auth-error" id="authError" role="alert" aria-live="polite"></p>
+      <button type="submit" class="primary-btn" id="authSubmit">Sign in</button>
+      <button type="button" class="primary-btn" id="accountRetry" hidden>Retry loading account</button>
+      <button type="button" class="text-btn" id="accountSignOut" hidden>Sign out</button>
+      <div id="profileSetup" hidden>
+        <label for="profileNickname">Nickname</label>
+        <input id="profileNickname" name="nickname" type="text" autocomplete="nickname" maxlength="40" required disabled>
+        <label for="profileStrand">Strand</label>
+        <select id="profileStrand" name="strand" required disabled>
+          <option value="">Select your strand</option>
+          <option value="STEM">STEM</option>
+          <option value="ICT">ICT</option>
+          <option value="HUMSS">HUMSS</option>
+          <option value="HE">HE</option>
+          <option value="GAS">GAS</option>
+        </select>
+        <label for="profileSection">Section</label>
+        <select id="profileSection" name="section" required disabled>
+          <option value="">Select your section</option>
+        </select>
+        <button type="submit" class="primary-btn" id="profileSubmit">Save profile</button>
+      </div>
+    </form>
+  </section>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
 
@@ -173,32 +209,32 @@
             <div class="activity-card beforestartquiz" id="beforeQuiz">
               <h2>Cybersafe Quiz - Module 1</h2>
               <p>Welcome to the CyberSafe Quiz! Test your knowledge of cybersecurity best practices.</p><strong> You need to learn all lessons in module 1 before taking the quiz.</strong>
-              <button class="primary-btn" id="startQuiz" data-module-quiz="1" onclick="startQuiz(1)">Retake Quiz</button>
+              <button class="primary-btn" id="startQuiz" data-module-quiz="1" onclick="startQuiz(1)">Start Quiz</button>
             </div>
             <div class="activity-card beforestartquiz" id="beforeQuiz">
               <h2>Cybersafe Quiz - Module 2</h2>
               <p>Welcome to the CyberSafe Quiz! Test your knowledge of cybersecurity best practices.</p><strong> You need to learn all lessons in module 2 before taking the quiz.</strong>
-              <button class="primary-btn" id="startQuiz" data-module-quiz="2" onclick="startQuiz(2)">Retake Quiz</button>
+              <button class="primary-btn" id="startQuiz" data-module-quiz="2" onclick="startQuiz(2)">Start Quiz</button>
             </div>
             <div class="activity-card beforestartquiz" id="beforeQuiz">
               <h2>Cybersafe Quiz - Module 3</h2>
               <p>Welcome to the CyberSafe Quiz! Test your knowledge of cybersecurity best practices.</p><strong> You need to learn all lessons in module 3 before taking the quiz.</strong>
-              <button class="primary-btn" id="startQuiz" data-module-quiz="3" onclick="startQuiz(3)">Retake Quiz</button>
+              <button class="primary-btn" id="startQuiz" data-module-quiz="3" onclick="startQuiz(3)">Start Quiz</button>
             </div>
             <div class="activity-card beforestartquiz" id="beforeQuiz" >
               <h2>Cybersafe Quiz - Module 4</h2>
               <p>Welcome to the CyberSafe Quiz! Test your knowledge of cybersecurity best practices.</p><strong> You need to learn all lessons in module 4 before taking the quiz.</strong>
-              <button class="primary-btn" id="startQuiz" data-module-quiz="4" onclick="startQuiz(4)">Retake Quiz</button>
+              <button class="primary-btn" id="startQuiz" data-module-quiz="4" onclick="startQuiz(4)">Start Quiz</button>
             </div>
             <div class="activity-card beforestartquiz" id="beforeQuiz">
               <h2>Cybersafe Quiz - Module 5</h2>
               <p>Welcome to the CyberSafe Quiz! Test your knowledge of cybersecurity best practices.</p><strong> You need to learn all lessons in module 5 before taking the quiz.</strong>
-              <button class="primary-btn" id="startQuiz" data-module-quiz="5" onclick="startQuiz(5)">Retake Quiz</button>
+              <button class="primary-btn" id="startQuiz" data-module-quiz="5" onclick="startQuiz(5)">Start Quiz</button>
             </div>
             <div class="activity-card beforestartquiz" id="beforeQuiz">
               <h2>Cybersafe Quiz - Final Boss</h2>
               <p>Welcome to the CyberSafe Quiz! Test your knowledge of cybersecurity best practices.</p><strong> You need to learn all lessons before taking the quiz.</strong>
-              <button class="primary-btn" id="startQuiz" data-final-quiz onclick="startQuiz(false)">Retake Quiz</button>
+              <button class="primary-btn" id="startQuiz" data-final-quiz onclick="startQuiz(false)">Start Quiz</button>
             </div>
           </article>
           
@@ -214,7 +250,7 @@
           <div class="page-header">
             <span class="eyebrow">BEST OVERALL SCORES</span>
             <h1>Leaderboard</h1>
-            <p>See the sample top scores and XP earned by your classmates.</p>
+            <p>Compare the live scores and XP earned by signed-in students.</p>
           </div>
           <div class="leaderboard-grid">
             <article class="panel leaderboard-panel">
@@ -225,12 +261,9 @@
               <div class="leaderboard-table-wrap">
                 <table class="leaderboard-table">
                   <thead>
-                    <tr><th scope="col">Rank</th><th scope="col">Student</th><th scope="col">Grade / Strand</th><th scope="col">Section</th><th scope="col">Score</th></tr>
+                    <tr><th scope="col">Rank</th><th scope="col">Student</th><th scope="col">Strand</th><th scope="col">Section</th><th scope="col">Score</th></tr>
                   </thead>
-                  <tbody>
-                    <tr><td><span class="leaderboard-rank">01</span></td><th scope="row">Nathan</th><td>12 · STEM</td><td>Reliable</td><td class="leaderboard-score">27,992</td></tr>
-                    <tr><td><span class="leaderboard-rank">02</span></td><th scope="row">Juan</th><td>12 · HE</td><td>Innovative</td><td class="leaderboard-score">16,543</td></tr>
-                  </tbody>
+                  <tbody id="blastLeaderboardRows"></tbody>
                 </table>
               </div>
             </article>
@@ -242,17 +275,14 @@
               <div class="leaderboard-table-wrap">
                 <table class="leaderboard-table">
                   <thead>
-                    <tr><th scope="col">Rank</th><th scope="col">Student</th><th scope="col">Grade / Strand</th><th scope="col">Section</th><th scope="col">XP</th></tr>
+                    <tr><th scope="col">Rank</th><th scope="col">Student</th><th scope="col">Strand</th><th scope="col">Section</th><th scope="col">XP</th></tr>
                   </thead>
-                  <tbody>
-                    <tr><td><span class="leaderboard-rank">01</span></td><th scope="row">Cheska</th><td>12 · ICT</td><td>Modest</td><td class="leaderboard-score">2,122</td></tr>
-                    <tr><td><span class="leaderboard-rank">02</span></td><th scope="row">Nicole</th><td>12 · HUMSS</td><td>Obedient</td><td class="leaderboard-score">1,921</td></tr>
-                  </tbody>
+                  <tbody id="xpLeaderboardRows"></tbody>
                 </table>
               </div>
             </article>
           </div>
-          <p class="leaderboard-note">Sample leaderboard data for display only.</p>
+          <p class="leaderboard-note" id="leaderboardStatus" aria-live="polite">Leaderboard loads after sign-in.</p>
         </section>
 
         <section class="page" id="password">
@@ -320,6 +350,8 @@
           <div class="page-header"><span class="eyebrow">PREFERENCES</span><h1>Settings</h1><p>Customize the prototype experience.</p></div>
           <div class="panel settings-panel">
             <div class="setting-row"><div><strong>Theme</strong><span>Choose the appearance of CyberSafe.</span></div><select id="themeSelect"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div>
+            <div class="setting-row"><div><strong>Graphics quality</strong><span>Adjust visual effects for your device.</span></div><select id="graphicsQualitySelect" aria-label="Graphics quality"><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select></div>
+            <div class="setting-row"><div><strong>Student profile</strong><span id="studentProfileSummary">Profile not set</span><span id="signedInEmail">Signed in</span></div><button type="button" class="danger-btn" id="signOut">Sign out</button></div>
             <div class="setting-row"><div><strong>Reset prototype data</strong><span>Clear lessons, quiz scores, experience, and activity.</span></div><button class="danger-btn" id="resetData">Reset Data</button></div>
           </div>
         </section>
@@ -466,7 +498,7 @@
             <div class="blastLog" id="blastLog">
               <input type="checkbox" id="showLogs">
             <span> Show Logs</span> 
-            <h3 id="levelDisplay">Project Codename BLAST-GENEROUS (a.k.a HYPE BLAST)</h3>
+            <h3 id="levelDisplay">HYPE BLAST</h3>
             
             
             <h4 id="pieceinf"></h4>
@@ -529,6 +561,10 @@
   <div id="overlay"></div>
   <div id="toast" class="toast"></div>
   <!-- CyberSafe JS -->
+   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
    <script src="js/password_gen.js"></script>
    <script src="js/data/module1.js"></script>
    <script src="js/data/module2.js"></script>
@@ -569,7 +605,6 @@
             }
         });
     </script>
-  <script src="js/data/lessons.js"></script>
   <script src="js/lesson.js"></script>
   <script src="js/otherinteractivity/wordhunt.js"></script>
   <script src="js/data/tips.js"></script>
