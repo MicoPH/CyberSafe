@@ -314,7 +314,7 @@ function startSimulation() {
   lastCorrect = false;
   document.getElementById("rules1").hidden = false;
   document.getElementById("game1").hidden = false;
-  document.getElementById("stats").classList.toggle("res");
+  document.querySelector("#phisingCard .stats").classList.toggle("res");
   document.getElementById("results1").hidden = true;
 
   renderScenario();
