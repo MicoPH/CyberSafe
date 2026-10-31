@@ -182,6 +182,13 @@
       <p id="lessonImportStatus" aria-live="polite"></p>
     </section>
 
+    <section id="blastQuizUploadSection" hidden aria-labelledby="blastQuizUploadHeading">
+      <h2 id="blastQuizUploadHeading">HYPE BLAST question bank</h2>
+      <p class="help">Upload the full HYPE BLAST question bank to the separate Firestore <code>blastQuiz</code> collection. This does not change module quizzes.</p>
+      <button type="button" id="uploadBlastQuizButton">Upload HYPE BLAST questions</button>
+      <p id="blastQuizUploadStatus" aria-live="polite"></p>
+    </section>
+
     <form id="quizUploadForm" hidden>
       <section aria-labelledby="quizHeading">
         <h2 id="quizHeading">Quiz upload</h2>
@@ -200,8 +207,8 @@
         </div>
         <div class="field">
           <label for="quizFile">Quiz JSON file</label>
-          <input id="quizFile" name="quizFile" type="file" accept=".json,application/json" required>
-          <p class="help">Use an array of questions with <code>q</code>, <code>answers</code>, and <code>correct</code> fields. The question text may also use <code>question</code>, and the answer index may use <code>ans</code>.</p>
+          <input id="quizFile" name="quizFile" type="file" accept=".json,application/json">
+          <p class="help">JSON questions use <code>q</code>, <code>answers</code>, and <code>correct</code> fields. The question text may also use <code>question</code>, and the answer index may use <code>ans</code>.</p>
         </div>
         <p id="fileStatus" aria-live="polite"></p>
       </section>
@@ -213,9 +220,15 @@
 
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
   <script src="js/data/lessons.js"></script>
+  <script src="js/quiz.js"></script>
+  <script src="localQuiz/mixed.js"></script>
+  <script src="localQuiz/mod1.js"></script>
+  <script src="localQuiz/mod2.js"></script>
+  <script src="localQuiz/mod3.js"></script>
+  <script src="localQuiz/mod4.js"></script>
+  <script src="localQuiz/mod5.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyB403LLB8yGnXDwq1wIE0Y_InVa21AlPY8",
@@ -227,7 +240,6 @@
     firebase.initializeApp(firebaseConfig);
 
     const auth = firebase.auth();
-    const database = firebase.database();
     const firestore = firebase.firestore();
     const adminAuthForm = document.getElementById("adminAuthForm");
     const quizUploadForm = document.getElementById("quizUploadForm");
@@ -236,6 +248,9 @@
     const quizFile = document.getElementById("quizFile");
     const fileStatus = document.getElementById("fileStatus");
     const submitStatus = document.getElementById("submitStatus");
+    const blastQuizUploadSection = document.getElementById("blastQuizUploadSection");
+    const uploadBlastQuizButton = document.getElementById("uploadBlastQuizButton");
+    const blastQuizUploadStatus = document.getElementById("blastQuizUploadStatus");
     const signInButton = document.getElementById("signInButton");
     const signOutButton = document.getElementById("signOutButton");
     const uploadButton = document.getElementById("uploadButton");
@@ -245,6 +260,37 @@
     let selectedQuizIsValid = false;
     let selectedQuiz = null;
     let isAdmin = false;
+
+    function normalizeQuizQuestions(questions) {
+      if (!Array.isArray(questions) || questions.length === 0) {
+        throw new Error("The quiz must contain a non-empty question array.");
+      }
+
+      return questions.map((question, index) => {
+        const prompt = question.q || question.question;
+        const correct = Number.isInteger(question.correct) ? question.correct : question.ans;
+        if (typeof prompt !== "string" || !prompt.trim()) {
+          throw new Error(`Question ${index + 1} needs a q or question text.`);
+        }
+        if (!Array.isArray(question.answers) || question.answers.length < 2 ||
+            question.answers.some(answer => typeof answer !== "string" || !answer.trim())) {
+          throw new Error(`Question ${index + 1} needs at least two non-empty answer strings.`);
+        }
+        if (!Number.isInteger(correct) || correct < 0 || correct >= question.answers.length) {
+          throw new Error(`Question ${index + 1} needs a valid zero-based correct or ans answer index.`);
+        }
+
+        return {
+          publicQuestion: {
+            q: prompt.trim(),
+            scenario: typeof question.scenario === "string" ? question.scenario : "",
+            answers: question.answers,
+            why: typeof question.why === "string" ? question.why : ""
+          },
+          correct
+        };
+      });
+    }
 
     quizFile.addEventListener("change", async () => {
       selectedQuizIsValid = false;
@@ -258,34 +304,7 @@
       try {
         const content = JSON.parse(await file.text());
         const questions = Array.isArray(content) ? content : content.questions;
-        if (!Array.isArray(questions) || questions.length === 0) {
-          throw new Error("The JSON must contain a non-empty question array, either as the root array or in a questions property.");
-        }
-
-        selectedQuiz = questions.map((question, index) => {
-          const prompt = question.q || question.question;
-          const correct = Number.isInteger(question.correct) ? question.correct : question.ans;
-          if (typeof prompt !== "string" || !prompt.trim()) {
-            throw new Error(`Question ${index + 1} needs a q or question text.`);
-          }
-          if (!Array.isArray(question.answers) || question.answers.length < 2 ||
-              question.answers.some(answer => typeof answer !== "string" || !answer.trim())) {
-            throw new Error(`Question ${index + 1} needs at least two non-empty answer strings.`);
-          }
-          if (!Number.isInteger(correct) || correct < 0 || correct >= question.answers.length) {
-            throw new Error(`Question ${index + 1} needs a valid zero-based correct or ans answer index.`);
-          }
-
-          return {
-            publicQuestion: {
-              q: prompt.trim(),
-              scenario: typeof question.scenario === "string" ? question.scenario : "",
-              answers: question.answers,
-              why: typeof question.why === "string" ? question.why : ""
-            },
-            correct
-          };
-        });
+        selectedQuiz = normalizeQuizQuestions(questions);
         selectedQuizIsValid = true;
         fileStatus.setAttribute("role", "status");
         fileStatus.textContent = `Valid quiz selected: ${file.name} (${selectedQuiz.length} questions).`;
@@ -309,6 +328,7 @@
         await auth.signOut();
         quizUploadForm.hidden = true;
         lessonMigrationSection.hidden = true;
+        blastQuizUploadSection.hidden = true;
         signOutButton.hidden = true;
         showAuthMessage("This account is not authorized as an administrator.", true);
         return false;
@@ -317,6 +337,7 @@
       isAdmin = true;
       quizUploadForm.hidden = false;
       lessonMigrationSection.hidden = false;
+      blastQuizUploadSection.hidden = false;
       signInButton.hidden = true;
       signOutButton.hidden = false;
       document.getElementById("adminEmail").disabled = true;
@@ -350,6 +371,7 @@
         isAdmin = false;
         quizUploadForm.hidden = true;
         lessonMigrationSection.hidden = true;
+        blastQuizUploadSection.hidden = true;
         signInButton.hidden = false;
         signOutButton.hidden = true;
         document.getElementById("adminEmail").disabled = false;
@@ -366,6 +388,7 @@
         isAdmin = false;
         quizUploadForm.hidden = true;
         lessonMigrationSection.hidden = true;
+        blastQuizUploadSection.hidden = true;
         signInButton.hidden = false;
         signOutButton.hidden = true;
         document.getElementById("adminEmail").disabled = false;
@@ -380,6 +403,7 @@
         isAdmin = false;
         quizUploadForm.hidden = true;
         lessonMigrationSection.hidden = true;
+        blastQuizUploadSection.hidden = true;
         showAuthMessage(`Could not verify admin access: ${error.message}`, true);
       }
     });
@@ -459,6 +483,93 @@
       }
     });
 
+    uploadBlastQuizButton.addEventListener("click", async () => {
+      if (!isAdmin || auth.currentUser?.uid !== ADMIN_UID) {
+        blastQuizUploadStatus.textContent = "Sign in with the configured administrator account first.";
+        blastQuizUploadStatus.setAttribute("role", "alert");
+        return;
+      }
+
+      let blastQuestions;
+      try {
+        if (!Array.isArray(quiz) || quiz.length === 0) {
+          throw new Error("The bundled HYPE BLAST question bank is empty.");
+        }
+        blastQuestions = quiz.map((question, index) => {
+          const answerIndex = Number.isInteger(question.ans) ? question.ans : question.correct;
+          if (typeof question.question !== "string" || !question.question.trim() ||
+              !Array.isArray(question.answers) || question.answers.length < 2 ||
+              question.answers.some(answer => typeof answer !== "string" || !answer.trim()) ||
+              !Number.isInteger(answerIndex) || answerIndex < 0 ||
+              answerIndex >= question.answers.length) {
+            throw new Error(`Question ${index + 1} is invalid.`);
+          }
+          return {
+            question: question.question.trim(),
+            scenario: typeof question.scenario === "string" ? question.scenario : "",
+            answers: question.answers,
+            ans: answerIndex,
+            why: typeof question.why === "string" ? question.why : "",
+            subject: typeof question.subject === "string" ? question.subject : ""
+          };
+        });
+      } catch (error) {
+        blastQuizUploadStatus.textContent = `Could not prepare HYPE BLAST questions: ${error.message}`;
+        blastQuizUploadStatus.setAttribute("role", "alert");
+        return;
+      }
+
+      uploadBlastQuizButton.disabled = true;
+      blastQuizUploadStatus.textContent = `Uploading ${blastQuestions.length} HYPE BLAST questions to Firestore…`;
+      blastQuizUploadStatus.setAttribute("role", "status");
+      try {
+        const blastQuizCollection = firestore.collection("blastQuiz");
+        const existingQuestions = await blastQuizCollection.get();
+        if (!existingQuestions.empty &&
+            !window.confirm(`The blastQuiz collection already contains ${existingQuestions.size} documents. Replace them with the bundled HYPE BLAST question bank?`)) {
+          blastQuizUploadStatus.textContent = "Upload cancelled. The existing HYPE BLAST question bank was not changed.";
+          return;
+        }
+
+        const desiredIds = new Set(blastQuestions.map((_, index) =>
+          `question-${String(index + 1).padStart(3, "0")}`
+        ));
+        const writes = [
+          ...existingQuestions.docs
+            .filter(documentSnapshot => !desiredIds.has(documentSnapshot.id))
+            .map(documentSnapshot => ({ type: "delete", ref: documentSnapshot.ref })),
+          ...blastQuestions.map((question, index) => ({
+            type: "set",
+            ref: blastQuizCollection.doc(`question-${String(index + 1).padStart(3, "0")}`),
+            question: {
+              ...question,
+              order: index,
+              uploadedBy: auth.currentUser.uid,
+              uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+            }
+          }))
+        ];
+        for (let offset = 0; offset < writes.length; offset += 400) {
+          const batch = firestore.batch();
+          writes.slice(offset, offset + 400).forEach(write => {
+            if (write.type === "delete") {
+              batch.delete(write.ref);
+            } else {
+              batch.set(write.ref, write.question);
+            }
+          });
+          await batch.commit();
+        }
+        blastQuizUploadStatus.textContent = `Uploaded ${blastQuestions.length} HYPE BLAST questions to Firestore collection blastQuiz.`;
+      } catch (error) {
+        console.error("HYPE BLAST question upload failed.", error);
+        blastQuizUploadStatus.textContent = `HYPE BLAST upload failed: ${error.message}`;
+        blastQuizUploadStatus.setAttribute("role", "alert");
+      } finally {
+        uploadBlastQuizButton.disabled = false;
+      }
+    });
+
     quizUploadForm.addEventListener("submit", async (event) => {
       event.preventDefault();
       if (!isAdmin || !auth.currentUser) {
@@ -484,37 +595,29 @@
       showUploadMessage("Uploading quiz…", false);
 
       try {
-        const quizRef = database.ref(`quizzes/modules/${moduleId}`);
-        const existingQuiz = await quizRef.once("value");
-        if (existingQuiz.exists() &&
+        const quizRef = firestore.collection("quizzes").doc(moduleId);
+        const existingQuiz = await quizRef.get();
+        if (existingQuiz.exists &&
             !window.confirm(`${moduleTitle} already has an uploaded quiz. Replace it?`)) {
           showUploadMessage("Upload cancelled. The existing module quiz was not changed.", false);
           return;
         }
 
-        const version = database.ref().push().key;
+        const version = firestore.collection("quizVersions").doc().id;
         if (!version) {
           throw new Error("Could not generate a quiz version ID.");
         }
 
-        const updates = {};
-        updates[`quizAnswerKeys/${moduleId}/${version}`] = {
-          moduleId,
-          version,
-          answers: answerKeys,
-          uploadedBy: auth.currentUser.uid,
-          uploadedAt: firebase.database.ServerValue.TIMESTAMP
-        };
-        updates[`quizzes/modules/${moduleId}`] = {
+        await quizRef.set({
           moduleId,
           version,
           questions,
+          answers: answerKeys,
           uploadedBy: auth.currentUser.uid,
-          uploadedAt: firebase.database.ServerValue.TIMESTAMP
-        };
-        await database.ref().update(updates);
+          uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
 
-        showUploadMessage(`${moduleTitle} quiz uploaded successfully. The student app will identify it using quiz ID ${moduleId}.`, false);
+        showUploadMessage(`${moduleTitle} quiz uploaded to Firestore successfully. The student app will identify it using quiz ID ${moduleId}.`, false);
         quizUploadForm.reset();
         selectedQuiz = null;
         selectedQuizIsValid = false;

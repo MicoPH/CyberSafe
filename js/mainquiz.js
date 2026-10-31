@@ -59,10 +59,11 @@ async function startQuiz(number) {
                 prepareQuizQuestions(number, uploadedQuiz);
             } catch (error) {
                 console.error(`Could not load the uploaded quiz for module ${number}.`, error);
-                toast(`Could not load Module ${number} quiz. Check your connection and Realtime Database rules.`);
+                toast(`Could not load Module ${number} quiz. Check your connection and Firestore rules.`);
                 return;
             }
             quizLaunchPage = document.querySelector(".page.active")?.id || "interactive";
+            pushAppModalHistory("quiz", closeQuizWindow);
             document.getElementById("quizScoreboard").classList.add("hidden");
             document.getElementById("overlay").classList.add("active");
             document.getElementById("quizCard").style.display = "block";
@@ -79,7 +80,7 @@ async function startQuiz(number) {
               uploadedQuiz = await loadUploadedModuleQuestions(6);
           } catch (error) {
               console.error("Could not load the uploaded Final Boss quiz.", error);
-              toast("Could not load the Final Boss quiz. Check your connection and Realtime Database rules.");
+              toast("Could not load the Final Boss quiz. Check your connection and Firestore rules.");
               return;
           }
           if (uploadedQuiz?.alreadySubmitted) {
@@ -87,6 +88,7 @@ async function startQuiz(number) {
               return;
           }
           quizLaunchPage = document.querySelector(".page.active")?.id || "interactive";
+          pushAppModalHistory("quiz", closeQuizWindow);
           document.getElementById("quizScoreboard").classList.add("hidden");
           document.getElementById("overlay").classList.add("active");
           document.getElementById("quizCard").style.display = "block";
@@ -112,17 +114,22 @@ function shuffleQuizItems(items) {
 }
 
 async function loadUploadedModuleQuestions(moduleId) {
-    const snapshot = await firebase.database().ref(`quizzes/modules/${moduleId}`).once("value");
-    if (!snapshot.exists()) {
+    const snapshot = await firebase.firestore()
+        .collection("quizzes")
+        .doc(String(moduleId))
+        .get();
+    if (!snapshot.exists) {
         if (moduleId === 6) return null;
         throw new Error(`No quiz has been uploaded for module ${moduleId}.`);
     }
 
-    const uploadedQuiz = snapshot.val();
+    const uploadedQuiz = snapshot.data();
     if (String(uploadedQuiz.moduleId) !== String(moduleId) ||
         typeof uploadedQuiz.version !== "string" ||
         !Array.isArray(uploadedQuiz.questions) ||
-        uploadedQuiz.questions.length === 0) {
+        uploadedQuiz.questions.length === 0 ||
+        !Array.isArray(uploadedQuiz.answers) ||
+        uploadedQuiz.answers.length !== uploadedQuiz.questions.length) {
         throw new Error(`Uploaded quiz data for module ${moduleId} is invalid.`);
     }
 
@@ -131,17 +138,18 @@ async function loadUploadedModuleQuestions(moduleId) {
         throw new Error("Sign in to take this quiz.");
     }
 
-    const attempt = await firebase.database()
-        .ref(`quizAttempts/${user.uid}/${moduleId}/${uploadedQuiz.version}`)
-        .once("value");
-    if (attempt.exists()) {
+    const attempts = firebase.firestore()
+        .collection("quizAttempts")
+        .doc(user.uid)
+        .collection("modules")
+        .doc(String(moduleId))
+        .collection("versions");
+    const attempt = await attempts.doc(uploadedQuiz.version).get();
+    if (attempt.exists) {
         return { alreadySubmitted: true };
     }
 
-    const answerSnapshot = await firebase.database()
-        .ref(`quizAnswerKeys/${moduleId}/${uploadedQuiz.version}/answers`)
-        .once("value");
-    const answerKeys = answerSnapshot.val();
+    const answerKeys = uploadedQuiz.answers;
     if (!Array.isArray(answerKeys) || answerKeys.length !== uploadedQuiz.questions.length) {
         throw new Error(`Answer key for module ${moduleId} is missing or invalid.`);
     }
@@ -349,28 +357,41 @@ async function submitUploadedQuiz() {
         throw new Error("Sign in again before submitting this quiz.");
     }
 
-    const attemptRef = firebase.database()
-        .ref(`quizAttempts/${user.uid}/${currquizmodule}/${uploadedQuizVersion}`);
+    const attemptRef = firebase.firestore()
+        .collection("quizAttempts")
+        .doc(user.uid)
+        .collection("modules")
+        .doc(String(currquizmodule))
+        .collection("versions")
+        .doc(uploadedQuizVersion);
     const attempt = {
         uid: user.uid,
         moduleId: String(currquizmodule),
         version: uploadedQuizVersion,
         answers: uploadedQuizAnswers,
-        submittedAt: firebase.database.ServerValue.TIMESTAMP
+        submittedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
-    const result = await attemptRef.transaction(existingAttempt =>
-        existingAttempt === null ? attempt : undefined
-    );
-    if (!result.committed) {
-        const savedAttempt = await attemptRef.once("value");
-        const saved = savedAttempt.val();
+    try {
+        await firebase.firestore().runTransaction(async transaction => {
+            const existingAttempt = await transaction.get(attemptRef);
+            if (existingAttempt.exists) {
+                throw new Error("An attempt for this quiz version has already been submitted.");
+            }
+            transaction.set(attemptRef, attempt);
+        });
+    } catch (error) {
+        const savedAttempt = await attemptRef.get();
+        const saved = savedAttempt.data();
         const isSameSubmission = saved &&
             saved.uid === attempt.uid &&
             saved.moduleId === attempt.moduleId &&
             saved.version === attempt.version &&
             JSON.stringify(saved.answers) === JSON.stringify(attempt.answers);
         if (!isSameSubmission) {
-            throw new Error("An attempt for this quiz version has already been submitted.");
+            if (savedAttempt.exists) {
+                throw new Error("An attempt for this quiz version has already been submitted.");
+            }
+            throw error;
         }
     }
 }
@@ -405,6 +426,7 @@ function completeQuiz(correctAnswers, questionCount) {
     quizScore = 0;
     resetUploadedQuizState();
 
+    dismissAppModalHistory("quiz");
     document.getElementById('overlay').classList.remove('active');
     document.getElementById('quizCard').style.animation = 'lesson-detail-animationOut 0.3s ease forwards';
     setTimeout(() => {
@@ -427,6 +449,7 @@ function completeQuiz(correctAnswers, questionCount) {
 
 function showQuizScoreboard(moduleId, percent, correctAnswers, questionCount) {
   const scoreboard = document.getElementById("quizScoreboard");
+  pushAppModalHistory("quiz-scoreboard", closeQuizScoreboardWindow);
   const pointsEarned = percent;
   scoreboard.innerHTML = `
     <div class="panel-title">
@@ -448,6 +471,10 @@ function showQuizScoreboard(moduleId, percent, correctAnswers, questionCount) {
 }
 
 function closeQuiz() {
+    closeAppModalHistory("quiz", closeQuizWindow);
+}
+
+function closeQuizWindow() {
     clearQuizTimers();
     if (state.quizProgress) {
         state.quizProgress.deadline = Date.now() + Math.max(1, quizTimeRemaining) * 1000;
@@ -460,6 +487,10 @@ function closeQuiz() {
         document.getElementById('quizCard').classList.add('hidden');
         document.getElementById('quizCard').style.animation = '';
     }, 300);
+}
+
+function closeQuizScoreboardWindow() {
+    document.getElementById("quizScoreboard").classList.add("hidden");
 }
 
 function restoreQuizProgress(progress) {
@@ -502,6 +533,7 @@ function restoreQuizProgress(progress) {
         ? progress.launchPage
         : "interactive";
     navigate(quizLaunchPage);
+    pushAppModalHistory("quiz", closeQuizWindow);
     document.getElementById("quizScoreboard").classList.add("hidden");
     document.getElementById("overlay").classList.add("active");
     document.getElementById("quizCard").style.display = "block";

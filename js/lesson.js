@@ -372,6 +372,7 @@ function openLesson(id) {
       toast(`Complete Module ${lesson.moduleId - 1} quiz to unlock this module.`);
       return;
     }
+    pushAppModalHistory("lesson", closeLessonWindow);
 
     const detail = document.getElementById("lessonDetail");
     const overlay = document.getElementById("overlay");
@@ -549,7 +550,11 @@ function openLesson(id) {
 }
 
 
-function closelesson(){
+function closelesson() {
+    closeAppModalHistory("lesson", closeLessonWindow);
+}
+
+function closeLessonWindow() {
     clearInterval(lessonCountdown);
         clearTimeout(autoLessonAdvanceTimer);
         if (autoLessonQueue) {

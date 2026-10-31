@@ -108,6 +108,7 @@ const phishingPointsPerCorrectAnswer = 50;
 
 
 function phishingStart() {
+    pushAppModalHistory("phishing", closePhishingWindow);
     document.getElementById("phisingCard").classList.add("active");
     document.getElementById("overlay").classList.add("active");
     if (getSavedPhishingProgress()) {
@@ -117,6 +118,10 @@ function phishingStart() {
     }
 }
 function phishingClose() {
+    closeAppModalHistory("phishing", closePhishingWindow);
+}
+
+function closePhishingWindow() {
     document.getElementById("overlay").classList.remove("active");
     document.getElementById('phisingCard').style.animation = 'lesson-detail-animationOut 0.3s ease forwards';
     setTimeout(() => {

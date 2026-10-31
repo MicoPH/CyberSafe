@@ -498,12 +498,17 @@ function startGame() {
 restartButton.addEventListener("click", startGame);
 
 function wordHuntStart() {
+    pushAppModalHistory("word-hunt", closeWordHuntWindow);
     document.getElementById("wordHuntCard").classList.add("active");
     document.getElementById("overlay").classList.add("active");
     startGame();
 }
 
 function wordHuntClose() {
+    closeAppModalHistory("word-hunt", closeWordHuntWindow);
+}
+
+function closeWordHuntWindow() {
     clearInterval(timerId)
     document.getElementById("overlay").classList.remove("active");
     document.getElementById('wordHuntCard').style.animation = 'lesson-detail-animationOut 0.3s ease forwards';

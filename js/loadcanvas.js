@@ -36,7 +36,6 @@ function resetGrid() {
 function saveBlastProgress() {
     if (typeof gameOverXpAwarded !== 'undefined' && gameOverXpAwarded) {
         blastProgress = null;
-        scheduleUserDataSave();
         return;
     }
     if (typeof grid === 'undefined' || !pieceSelection) return;
@@ -53,10 +52,12 @@ function saveBlastProgress() {
             color: canvas.piece ? pieceColors[index] || null : null
         })),
         questionPending: Boolean(quizActive),
-        questionIndex: quizActive ? currentQuestionIndex : -1
+        questionIndex: quizActive ? currentQuestionIndex : -1,
+        questionResponse: quizActive && typeof activeQuestionResponse !== 'undefined'
+            ? activeQuestionResponse
+            : null
     };
     blastProgress = progress;
-    scheduleUserDataSave();
 }
 
 function restoreBlastProgress() {
@@ -97,12 +98,11 @@ function restoreBlastProgress() {
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'hidden') {
         saveBlastProgress();
-        flushUserDataSave();
     }
 });
 window.addEventListener('pagehide', () => {
     saveBlastProgress();
-    flushUserDataSave();
+    flushUserDataSave(blastProgress);
 });
 
     // make sure quiz UI is hidden initially
@@ -113,7 +113,12 @@ if (overlay) overlay.classList.add('hide');
 window.addEventListener('resize', resizeCanvas);
 // Call loadImages to load the images and halt further execution
 function gameBlasterClose(){
+    closeAppModalHistory("hype-blast", closeHypeBlastWindow);
+}
+
+function closeHypeBlastWindow() {
     saveBlastProgress();
+    flushUserDataSave(blastProgress);
     if (quizActive) cancelRandomQuestion();
     if (scoreAnimationFrameId) {
         cancelAnimationFrame(scoreAnimationFrameId);
@@ -136,6 +141,7 @@ function gameStart(){
         toast("Complete the Final Boss quiz to unlock HYPE BLAST.");
         return;
     }
+    pushAppModalHistory("hype-blast", closeHypeBlastWindow);
     blaster = true;
     document.querySelector(".game-content").style.display = "block"
     document.getElementById("overlay").classList.add("blast")
@@ -165,7 +171,7 @@ function gameStart(){
         document.getElementById('questogo').innerText = `${Math.max(0, 3 - questachieve)} left cleared moves to get question`;
         saveBlastProgress();
         if (progress?.questionPending) {
-            showRandomQuestion(progress.questionIndex);
+            showRandomQuestion(progress.questionIndex, progress.questionResponse || null);
         } else if (progress) {
             checkGameOver();
         }

@@ -1,5 +1,4 @@
 
-
 let lessons = [];
 let totalLessons = 0;
 
@@ -45,6 +44,20 @@ let studentProfile = { nickname: "", strand: "", section: "" };
 let signedInUser = null;
 let leaderboardUnsubscribers = [];
 
+function clearLocalBlastProgress() {
+    try {
+        Object.keys(localStorage).forEach(key => {
+            if (key === "hypeBlastProgress" || key.startsWith("hypeBlastProgress:")) {
+                localStorage.removeItem(key);
+            }
+        });
+    } catch (error) {
+        console.error("Could not remove saved HYPE BLAST progress from this browser.", error);
+    }
+}
+
+clearLocalBlastProgress();
+
 function getLegacyUserData() {
     let legacyState = {};
     try {
@@ -60,20 +73,13 @@ function getLegacyUserData() {
             legacyState.completedLessons = [];
         }
     }
-    let legacyBlastProgress = null;
-    try {
-        legacyBlastProgress = JSON.parse(localStorage.getItem("hypeBlastProgress") || "null");
-    } catch (error) {
-        console.error("Could not read previous HYPE BLAST progress.", error);
-    }
     return {
         state: legacyState,
         preferences: {
             theme: localStorage.getItem("cybersafeTheme") || "system",
             graphicsQuality: localStorage.getItem("cybersafeGraphicsQuality") || "medium"
         },
-        blastScore: Math.max(0, Number(localStorage.getItem("blastScore")) || 0),
-        blastProgress: legacyBlastProgress
+        blastScore: Math.max(0, Number(localStorage.getItem("blastScore")) || 0)
     };
 }
 
@@ -88,14 +94,15 @@ function scheduleUserDataSave() {
     saveTimer = setTimeout(flushUserDataSave, 250);
 }
 
-function flushUserDataSave() {
+function flushUserDataSave(blastProgressToSave) {
     if (!firestoreDocument || !userDataLoaded) return pendingCloudSave;
     clearTimeout(saveTimer);
     const targetDocument = firestoreDocument;
+    const shouldSaveBlastProgress = blastProgressToSave !== undefined;
     const documentData = {
         state,
         preferences: userPreferences,
-        games: { hypeBlast: { highScore: blastScore, progress: blastProgress } },
+        games: { hypeBlast: { highScore: blastScore } },
         updatedAt: firebase.firestore.FieldValue.serverTimestamp()
     };
     const leaderboardData = {
@@ -107,6 +114,16 @@ function flushUserDataSave() {
     pendingCloudSave = pendingCloudSave
         .then(async () => {
             await targetDocument.set(documentData, { merge: true });
+            if (shouldSaveBlastProgress) {
+                if (blastProgressToSave === null) {
+                    await targetDocument.update(
+                        "games.hypeBlast.progress",
+                        firebase.firestore.FieldValue.delete()
+                    );
+                } else {
+                    await targetDocument.update("games.hypeBlast.progress", blastProgressToSave);
+                }
+            }
             try {
                 await syncLeaderboardEntry(leaderboardData);
             } catch (error) {
@@ -145,7 +162,7 @@ async function loadUserData(user, expectedAuthStateVersion) {
         Object.assign(state, defaultState, legacyData.state);
         userPreferences = legacyData.preferences;
         blastScore = legacyData.blastScore;
-        blastProgress = legacyData.blastProgress;
+        blastProgress = null;
         studentProfile = { nickname: "", strand: "", section: "" };
     }
     state.completedLessons = Array.isArray(state.completedLessons) ? state.completedLessons : [];
@@ -165,7 +182,7 @@ async function loadUserData(user, expectedAuthStateVersion) {
         await document.set({
             state,
             preferences: userPreferences,
-            games: { hypeBlast: { highScore: blastScore, progress: blastProgress } },
+            games: { hypeBlast: { highScore: blastScore } },
             updatedAt: firebase.firestore.FieldValue.serverTimestamp()
         });
     }
@@ -416,13 +433,14 @@ document.getElementById("authForm").addEventListener("submit", async event => {
     try {
         await auth.signInWithEmailAndPassword(email, password);
     } catch (error) {
+        console.error("Firebase sign-in failed.", error);
         const messages = {
             "auth/invalid-email": "Enter a valid email address.",
             "auth/invalid-credential": "The email or password is incorrect.",
             "auth/operation-not-allowed": "Email and password sign-in is not enabled for this Firebase project.",
             "auth/network-request-failed": "Unable to reach the sign-in service. Check your connection and try again."
         };
-        setAuthError(messages[error.code] || "Sign-in failed. Please try again.");
+        setAuthError(messages[error.code] || `Sign-in failed${error.code ? ` (${error.code})` : ""}. Please try again.`);
         document.getElementById("authMessage").textContent = "Sign in with your email and password to continue.";
     } finally {
         submitButton.disabled = false;
@@ -498,6 +516,7 @@ document.getElementById("accountSignOut").addEventListener("click", async () => 
 auth.onAuthStateChanged(user => {
     const expectedAuthStateVersion = ++authStateVersion;
     if (!user) {
+        if (expectedAuthStateVersion !== authStateVersion || auth.currentUser) return;
         clearTimeout(saveTimer);
         stopLeaderboardListeners();
         firestoreDocument = null;
@@ -546,7 +565,110 @@ function toast(message) {
     window.toastTimer = setTimeout(() => el.classList.remove("show"), 2200);
 }
 
-function navigate(page) {
+const appHistoryStateKey = "__cybersafeApp";
+let handlingAppPopState = false;
+let activeAppModal = null;
+const appModalBackHandlers = new Map();
+
+function getAppHistoryState() {
+    const appState = history.state?.[appHistoryStateKey];
+    if (appState && typeof appState === "object") return appState;
+    return {
+        page: document.querySelector(".page.active")?.id || "dashboard",
+        modal: null
+    };
+}
+
+function pushAppModalHistory(modalId, onBack) {
+    appModalBackHandlers.set(modalId, onBack);
+    const currentState = getAppHistoryState();
+    if (currentState.modal === modalId) {
+        activeAppModal = modalId;
+        return;
+    }
+
+    history.pushState({
+        ...(history.state || {}),
+        [appHistoryStateKey]: {
+            page: currentState.page,
+            modal: modalId,
+            parentModal: currentState.modal || null
+        }
+    }, "");
+    activeAppModal = modalId;
+}
+
+function closeAppModalHistory(modalId, closeModal) {
+    if (!handlingAppPopState && activeAppModal === modalId &&
+        getAppHistoryState().modal === modalId) {
+        history.back();
+        return;
+    }
+
+    if (activeAppModal === modalId) activeAppModal = null;
+    closeModal();
+}
+
+function dismissAppModalHistory(modalId) {
+    if (activeAppModal !== modalId || getAppHistoryState().modal !== modalId) return;
+    const currentState = getAppHistoryState();
+    history.replaceState({
+        ...(history.state || {}),
+        [appHistoryStateKey]: {
+            page: currentState.page,
+            modal: currentState.parentModal || null,
+            parentModal: null
+        }
+    }, "");
+    activeAppModal = currentState.parentModal || null;
+}
+
+window.addEventListener("popstate", event => {
+    const nextState = event.state?.[appHistoryStateKey];
+    const nextModal = nextState?.modal || null;
+
+    if (activeAppModal && activeAppModal !== nextModal) {
+        const closeModal = appModalBackHandlers.get(activeAppModal);
+        activeAppModal = null;
+        if (closeModal) {
+            handlingAppPopState = true;
+            try {
+                closeModal();
+            } finally {
+                handlingAppPopState = false;
+            }
+        }
+    }
+
+    if (nextState?.page) navigate(nextState.page, false);
+    activeAppModal = nextModal;
+});
+
+history.replaceState({
+    ...(history.state || {}),
+    [appHistoryStateKey]: {
+        page: document.querySelector(".page.active")?.id || "dashboard",
+        modal: null
+    }
+}, "");
+
+function navigate(page, recordHistory = true) {
+    if (recordHistory) {
+        const currentState = getAppHistoryState();
+        if (currentState.modal) {
+            history.replaceState({
+                ...(history.state || {}),
+                [appHistoryStateKey]: { page, modal: null }
+            }, "");
+            activeAppModal = null;
+        } else if (currentState.page !== page) {
+            history.pushState({
+                ...(history.state || {}),
+                [appHistoryStateKey]: { page, modal: null }
+            }, "");
+        }
+    }
+
     document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === page));
     document.querySelectorAll(".nav-item").forEach(b => b.classList.toggle("active", b.dataset.page === page));
     document.getElementById("breadcrumb").textContent = document.querySelector(`.nav-item[data-page="${page}"]`)?.textContent.trim() || page;
@@ -675,10 +797,11 @@ function applyTheme(value) {
     const dark = value === "dark" || (value === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
     document.body.classList.toggle("dark", dark);
     if (dark){
+        document.getElementById("menuBtn").src = "img/vector/more_dark.svg"
         document.getElementById("favicon").href = "img/icons/cybersecurity_dark.png";
         document.getElementById("mainicon").src = "img/icons/cybersecurity_dark.png";
     } else {
-        
+        document.getElementById("menuBtn").src = "img/vector/more-nav.svg"
         document.getElementById("favicon").href = "img/icons/cybersecurity_white.png";
         document.getElementById("mainicon").src = "img/icons/cybersecurity_white.png";
     }
@@ -714,6 +837,9 @@ function applyGraphicsQuality(value) {
     } else if (previousQuality === "low" && heroVideo.paused) {
         heroVideo.play().catch(() => toast("The browser blocked the hero video from playing."));
     }
+    try{
+        liquidGlass(quality);
+    } catch {}
 }
 function updateNavIcons() {
     document.querySelectorAll(".nav-item").forEach(item => {
@@ -763,18 +889,27 @@ document.querySelectorAll("[data-go]").forEach(btn => btn.addEventListener("clic
   navigate(btn.dataset.go);
 }));
 
-document.getElementById("menuBtn").addEventListener("click", () => {
-  document.getElementById("sidebar").classList.toggle("open")
-  document.getElementById("overlay").classList.add("activetask")
+function closeNavigationMenu() {
+    document.getElementById("sidebar").classList.remove("open");
+    document.getElementById("overlay").classList.remove("activetask");
+}
 
+document.getElementById("menuBtn").addEventListener("click", () => {
+    if (document.getElementById("sidebar").classList.contains("open")) {
+        closeAppModalHistory("navigation-menu", closeNavigationMenu);
+        return;
+    }
+
+    pushAppModalHistory("navigation-menu", closeNavigationMenu);
+    document.getElementById("sidebar").classList.add("open");
+    document.getElementById("overlay").classList.add("activetask");
 });
 
 document.getElementById("overlay").addEventListener("click", () => {
-  if (document.getElementById("overlay").classList.contains("activetask")){
-    document.getElementById("sidebar").classList.toggle("open") 
-    document.getElementById("overlay").classList.remove("activetask")
-  }
-})
+    if (document.getElementById("overlay").classList.contains("activetask")) {
+        closeAppModalHistory("navigation-menu", closeNavigationMenu);
+    }
+});
 
 document.getElementById("passwordInput").addEventListener("input", checkPassword);
 

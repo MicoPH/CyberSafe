@@ -14,13 +14,58 @@ service cloud.firestore {
     }
 
     match /leaderboard/{userId} {
-      allow read: if signedIn();
+      allow get, list: if signedIn();
       allow create, update, delete: if signedIn() && request.auth.uid == userId;
     }
 
     match /lessons/{lessonId} {
       allow read: if signedIn();
       allow create, update, delete: if isAdmin();
+    }
+
+    match /blastQuiz/{questionId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin()
+        && request.resource.data.question is string
+        && request.resource.data.answers is list
+        && request.resource.data.answers.size() >= 2
+        && request.resource.data.ans is int
+        && request.resource.data.ans >= 0
+        && request.resource.data.ans < request.resource.data.answers.size()
+        && request.resource.data.order is int
+        && request.resource.data.uploadedBy == request.auth.uid
+        && request.resource.data.uploadedAt is timestamp;
+      allow delete: if isAdmin();
+    }
+
+    match /quizzes/{moduleId} {
+      allow read: if signedIn();
+      allow create, update: if isAdmin()
+        && request.resource.data.moduleId == moduleId
+        && request.resource.data.version is string
+        && request.resource.data.questions is list
+        && request.resource.data.questions.size() > 0
+        && request.resource.data.answers is list
+        && request.resource.data.answers.size() == request.resource.data.questions.size()
+        && request.resource.data.uploadedBy == request.auth.uid
+        && request.resource.data.uploadedAt is timestamp;
+      allow delete: if isAdmin();
+    }
+
+    match /quizAttempts/{userId}/modules/{moduleId}/versions/{version} {
+      allow read: if signedIn() && request.auth.uid == userId;
+      allow create: if signedIn()
+        && request.auth.uid == userId
+        && request.resource.data.uid == userId
+        && request.resource.data.moduleId == moduleId
+        && request.resource.data.version == version
+        && request.resource.data.answers is list
+        && request.resource.data.submittedAt is timestamp
+        && exists(/databases/$(database)/documents/quizzes/$(moduleId))
+        && get(/databases/$(database)/documents/quizzes/$(moduleId)).data.version == version
+        && request.resource.data.answers.size()
+          == get(/databases/$(database)/documents/quizzes/$(moduleId)).data.questions.size();
+      allow update, delete: if false;
     }
   }
 }
