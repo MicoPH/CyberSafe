@@ -230,10 +230,14 @@
     margin: 8px 0;
     line-height: 1.5;
 }
-
 .quiz-scenario{
+    color: rgba(0,0,0,0.75);
+}
+
+.dark .quiz-scenario{
     color: rgba(255,255,255,0.75);
 }
+
 
 .quiz-feedback.correct{
     color: #040e04;
